@@ -1,0 +1,25 @@
+topic: "Example AI Enterprise Infrastructure"
+slug: "ai_enterprise_infra"
+created_at: "2026-09-11"
+chunks:
+  - id: 1
+    slug: "market_overview"
+    title: "Market Landscape & Fundamentals"
+    focus_areas:
+      - "Core definition and market boundaries"
+      - "Total addressable market (TAM) & projected CAGR"
+      - "Key enterprise platform providers and market share"
+  - id: 2
+    slug: "financials_funding"
+    title: "Financial Performance & Capital Inflows"
+    focus_areas:
+      - "Venture and private equity capital raised in 2024-2026"
+      - "Valuation multiples and revenue metrics"
+      - "Leading unicorn valuations and unit economics"
+  - id: 3
+    slug: "tech_architecture"
+    title: "Core Architecture & Model Deployment"
+    focus_areas:
+      - "Inference acceleration and GPU utilization metrics"
+      - "Context engineering and retrieval latency benchmarks"
+      - "On-premise vs sovereign cloud adoption percentages"
