@@ -32,6 +32,7 @@ REQUIRED_COLUMNS = [
     "a search query with that data point",
     "grep from running his search query",
     "confidence score based on rechecking",
+    "triangulation status",
 ]
 
 
@@ -65,6 +66,10 @@ def load_all_data_points(results_dir):
 
             processed_sec_dps = []
             for dp in sec_dps:
+                conf = dp.get("confidence_score") or dp.get("confidence_score_based_on_rechecking") or "Highest"
+                triangulated = dp.get("triangulation_status") or dp.get("flag_as_triangulated") or (
+                    "Flag as Triangulated" if str(conf).strip().lower() in ("highest", "high") else "Undeclared"
+                )
                 std_dp = {
                     "sr no": current_sr,
                     "data point": dp.get("data_point") or dp.get("datapoint") or "",
@@ -72,7 +77,8 @@ def load_all_data_points(results_dir):
                     "quoted text from page": dp.get("quoted_text") or dp.get("quoted_text_from_page") or "",
                     "a search query with that data point": dp.get("verification_query") or dp.get("a_search_query_with_that_data_point") or "",
                     "grep from running his search query": dp.get("grep_result") or dp.get("grep_from_running_his_search_query") or "",
-                    "confidence score based on rechecking": dp.get("confidence_score") or dp.get("confidence_score_based_on_rechecking") or "Highest",
+                    "confidence score based on rechecking": conf,
+                    "triangulation status": triangulated,
                     "section": sec_title,
                     "chunk": chunk_title,
                 }
@@ -97,7 +103,7 @@ def export_tabular(data_points, output_base):
         return None, None
 
     df = pd.DataFrame(data_points)
-    # Ensure exact 7 columns in correct order
+    # Ensure exact required columns in correct order
     tabular_df = df[REQUIRED_COLUMNS]
 
     # 1. Export CSV
@@ -146,8 +152,11 @@ def export_tabular(data_points, output_base):
             cell.border = thin_border
             cell.font = mono_font if col_idx in (3, 4, 6) else body_font
             
-            # Highlight confidence
+            # Highlight confidence and triangulation
             if col_idx == 7 and str(val).strip().lower() in ("highest", "high"):
+                cell.fill = high_conf_fill
+                cell.font = Font(name="Segoe UI", size=9, bold=True, color="065F46")
+            elif col_idx == 8 and "triangulated" in str(val).strip().lower():
                 cell.fill = high_conf_fill
                 cell.font = Font(name="Segoe UI", size=9, bold=True, color="065F46")
             elif row_idx % 2 == 0:
@@ -158,18 +167,21 @@ def export_tabular(data_points, output_base):
                 cell.alignment = Alignment(horizontal="center", vertical="top")
             elif col_idx in (2, 4, 6):
                 cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+            elif col_idx in (7, 8):
+                cell.alignment = Alignment(horizontal="center", vertical="top")
             else:
                 cell.alignment = Alignment(horizontal="left", vertical="top")
 
     # Column Widths
     col_widths = {
         1: 8,   # sr no
-        2: 38,  # data point
-        3: 32,  # exact url
-        4: 45,  # quoted text
-        5: 28,  # search query
-        6: 42,  # grep result
+        2: 36,  # data point
+        3: 30,  # exact url
+        4: 42,  # quoted text
+        5: 26,  # search query
+        6: 38,  # grep result
         7: 16,  # confidence score
+        8: 22,  # triangulation status
     }
     for col_idx, width in col_widths.items():
         col_letter = openpyxl.utils.get_column_letter(col_idx)
@@ -345,7 +357,7 @@ def export_docx(data_points, chunk_summaries, topic, output_base):
 
     # Header Row
     hdr_cells = table.rows[0].cells
-    hdr_titles = ["Ref", "Verified Claim", "Source Quote & Corroboration", "Source Link"]
+    hdr_titles = ["Ref", "Verified Claim", "Source Quote & Triangulation", "Source Link"]
     for i, title in enumerate(hdr_titles):
         hdr_cells[i].text = title
         set_cell_margins(hdr_cells[i], top=120, bottom=120, left=120, right=120)
@@ -365,7 +377,7 @@ def export_docx(data_points, chunk_summaries, topic, output_base):
         row_cells = table.add_row().cells
         ref_text = f"DP-{dp['sr no']}"
         claim_text = dp["data point"]
-        quote_text = f'"{dp["quoted text from page"]}"\n[Grep Match]: {dp["grep from running his search query"]}'
+        quote_text = f'"{dp["quoted text from page"]}"\n[Grep Match]: {dp["grep from running his search query"]}\n[Triangulation]: {dp.get("triangulation status", "Flag as Triangulated")}'
         url_text = dp["exact url/subpage"]
 
         row_cells[0].text = ref_text
