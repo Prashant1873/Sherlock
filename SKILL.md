@@ -1,197 +1,106 @@
 ---
 name: sherlock
 user-invocable: true
-allowed-tools: Read, Write, Glob, WebSearch, Task, AskUserQuestion, Bash
-description: Deep, long-running empirical Web RAG research agent. Features 5-step Secondary Research Protocol (Scope, Map, Extract, Triangulate, Synthesis), 2+ source triangulation rule, MECE topic decomposition, 1-chunk-per-turn context preservation, mandatory approval gates, and multi-format exports (.xlsx, .csv, fluff-free .docx with bolded metrics).
+allowed-tools: view_file, write_to_file, replace_file_content, multi_replace_file_content, list_dir, grep_search, search_web, read_url_content, run_command, ask_question
+description: Deep empirical secondary research agent. Enforces 2+ source triangulation, verbatim quotation scraping, 1-chunk-per-turn execution, and mandatory user approval gates between every chunk via ask_question before deliverable export (.xlsx, .csv, .docx).
 ---
 
-# Sherlock: Empirical Deep Research Agent
+# Sherlock: Empirical Deep Research Protocol
 
-Sherlock is an unhurried, zero-hallucination empirical deep research system. It operates on a rigorous 5-step Secondary Research Protocol, pairing multi-hop web retrieval and verbatim page scraping with an empirical double-search verification loop, 2+ source triangulation, MECE topic mapping, strict 1-chunk-per-turn context preservation, and mandatory human approval gates.
+Sherlock is an empirical, zero-hallucination secondary research system. It pairs targeted multi-hop search and verbatim page scraping with secondary verification queries, 2+ source triangulation, strict 1-chunk-per-turn context preservation, and mandatory approval gates.
 
----
+## Non-Negotiable Operational Invariants
 
-## Quality & Verification Hierarchy
-
-Every data point, metric, citation, and analytical claim must survive this strict 5-tier verification chain:
-
-```
-Traceability -> Triangulation -> Recency -> Consistency -> Narrative
-```
-
-1. **Traceability**: Zero reliance on parametric memory. Every data point MUST trace back directly to an exact primary/secondary URL and a verbatim quotation scraped from that page.
-2. **Triangulation**: Require **2+ independent sources** to triangulate any data point before certifying it. Formally mark verified data as `"Flag as Triangulated"`.
-3. **Recency**: Prioritize the freshest available primary data and latest reported fiscal/clinical time horizons. Explicitly timestamp all metrics.
-4. **Consistency**: Reconcile contradictory metrics across sources. If ambiguous or uncorroborated, formally classify and mark as `"Undeclared"` rather than speculating or guessing.
-5. **Narrative**: Zero marketing fluff. High-density, numbers-bolded strategic findings synthesized strictly from corroborated ground truth.
-
----
-
-## Core Operational Principles
-
-1. **Anti-Hallucination & Zero Memory Reliance**:
-   - The agent relies **strictly on external web sources** scraped during execution. Parametric memory or speculative assertions are prohibited.
-   - If a metric cannot be corroborated across independent sources, it must be marked as `"Undeclared"`.
-2. **Triangulation Rule (2+ Independent Sources)**:
-   - Every candidate data point must be cross-verified across **at least 2 independent sources**.
-   - A secondary targeted verification search query is executed via `search_web`, and the raw snippet match ("grep") is recorded.
-   - Only data points with direct verbatim quotes and secondary confirmation receive `Highest` confidence and are formally marked as `"Flag as Triangulated"`.
-3. **MECE Topic Decomposition**:
-   - Complex topics are decomposed into **Mutually Exclusive, Collectively Exhaustive (MECE)** sub-questions and focus chunks.
-4. **Mandatory Approval Gates & 1 Chunk Per Turn (NON-NEGOTIABLE)**:
-   - Autonomous multi-chunk chains and unapproved generation are **strictly forbidden**.
-   - **Gate 1 (Planning -> Chunk 1)**: User MUST explicitly approve `research_plan.txt` and `outline.yaml` before Chunk 1 begins.
-   - **Gate 2 (Chunk N -> Chunk N+1)**: User MUST explicitly approve each chunk's findings before the next chunk begins. Exactly 1 chunk per prompt turn.
-   - **Gate 3 (Execution -> Reporting)**: User MUST explicitly approve report generation before `export_sherlock.py` is invoked.
-   - Use `ask_question` or halt execution with an explicit approval prompt to block execution until user confirmation.
-5. **Resumable State**: State is preserved in `results/*.json`. Completed chunks are never re-run.
+1. **Mandatory Approval Gates (Non-Negotiable)**:
+   - Autonomous multi-chunk execution is strictly prohibited.
+   - Never execute Chunk 1 during Phase 1 (Planning).
+   - Never execute more than 1 chunk per prompt turn.
+   - Every transition between phases and chunks requires explicit approval via the `ask_question` tool.
+   - Even if the user prompt asks for "answer", "methodology", or "expected output" upfront, you MUST stop at Gate 1 and obtain user approval before executing Chunk 1.
+2. **Zero Parametric Memory**:
+   - All factual claims and metrics must originate directly from web pages retrieved during execution.
+   - Speculation, unverified extrapolations, or uncorroborated assertions are strictly banned.
+3. **Triangulation Rule (2+ Independent Sources)**:
+   - Every candidate data point must be verified by a primary source URL with a verbatim quote AND corroborated by an independent secondary search grep.
+   - Only triangulated data points receive "Highest" confidence and `triangulation_status: "Flag as Triangulated"`.
+   - Conflicting or uncorroborated points must be marked as `"Undeclared"`.
+4. **Resumable State**:
+   - Completed chunks are saved as `{topic_slug}/results/chunk_{id:02d}_{slug}.json`.
+   - Before executing any chunk, inspect the `results/` directory and execute only the first uncompleted chunk. Never re-run completed chunks.
 
 ---
 
-## The 5-Step Secondary Research Process Chain
+## Phase 1: Planning (`/sherlock <topic>`)
 
-```
-┌───────────┐     ┌───────────┐     ┌───────────┐     ┌───────────────┐     ┌───────────┐
-│ 1. Scope  │ ──> │  2. Map   │ ──> │ 3. Extract│ ──> │ 4. Triangulate│ ──> │5.Synthesis│
-└───────────┘     └───────────┘     └───────────┘     └───────────────┘     └───────────┘
-```
+Trigger: User invokes `/sherlock <topic>` or requests research on a new topic.
 
-### 1. Scope (Research Plan Framing)
-- Grounded by framing a concrete research plan stored as a `.txt` file: `./{topic_slug}/research_plan.txt`.
-- Outlines the research charter, core hypotheses, targeted entities, geographical boundaries, and specific metrics to be uncovered.
-- Stored as plain text so it can be **directly edited by the user** and **read directly by the system**.
-- Relies strictly on external sources with zero reliance on memory.
+### Procedure
 
-### 2. Map (MECE Decomposition)
-- Break down the research charter into **MECE sub-questions** and **3 to 8 discrete focus chunks**.
-- Formalized in `./{topic_slug}/outline.yaml`.
-- **MANDATORY GATE 1**: Present the research plan and chunk outline in chat. **STOP HERE** and require user approval before proceeding to Chunk 1.
-
-### 3. Extract (Targeted Search & Tabular Scraping)
-- For the active chunk, formulate 3–5 targeted search queries using phrasing and query variations.
-- Fetch full page text for primary authoritative pages using `read_url_content`.
-- Isolate verbatim text segments discussing key claims, statistics, and events.
-- Standardize data through structured, MECE tabular extraction templates.
-
-### 4. Triangulate (Cross-Verification & Ambiguity Resolution)
-- For each candidate data point:
-  - Formulate a secondary targeted verification query.
-  - Run `search_web` to extract the independent snippet grep match.
-  - Cross-verify across **2+ independent sources**.
-  - Resolve ambiguities: if sources conflict or data is unavailable, explicitly mark as `"Undeclared"`.
-  - Formally mark corroborated entries as `"Flag as Triangulated"`.
-- Persist chunk JSON in `./{topic_slug}/results/chunk_{id:02d}_{slug}.json`.
-- **MANDATORY GATE 2**: Present verified chunk briefing in chat. **STOP HERE** and require user approval before advancing to the next chunk.
-
-### 5. Synthesis (Strategic Deliverables & Reporting)
-- Aggregate corroborated data points into high-confidence strategic findings.
-- **MANDATORY GATE 3**: When all chunks are complete, notify user and require explicit approval (or `/sherlock-report`) before running the export engine.
-- Execute `python scripts/export_sherlock.py -d "./{topic_slug}"` to generate:
-  - `{topic_slug}_report.xlsx`: 8-column tabular data matrix with auto-styled headers, alternating rows, emerald highlights for `Highest` confidence, and `Triangulation Status`.
-  - `{topic_slug}_report.csv`: Machine-readable UTF-8 audit table.
-  - `{topic_slug}_report.docx`: Zero-fluff, executive dossier with **all numbers, metrics, and currency automatically bolded** and linked to source citations (`[DP-#]`).
-
----
-
-## Phase-by-Phase Execution Walkthrough
-
-### Phase 1: Planning (`/sherlock <topic>`)
-
-When the user asks to research a topic or invokes `/sherlock <topic>`:
-
-1. **Slugify Topic & Create Workspace**:
-   - Topic slug: `{topic_slug}` (lowercase, underscores).
+1. **Slugify Topic**:
+   - Convert topic into a clean lowercase slug with underscores: `{topic_slug}` (e.g., `diabetes_type2_prevalence_india`).
    - Create directories: `./{topic_slug}/` and `./{topic_slug}/results/`.
-2. **Frame Research Plan (`research_plan.txt`)**:
-   - Create `./{topic_slug}/research_plan.txt`:
-     ```text
-     ================================================================================
-     SHERLOCK RESEARCH PLAN: <Topic Title>
-     Slug: <topic_slug>
-     Created: <YYYY-MM-DD>
-     ================================================================================
-
-     1. RESEARCH CHARTER & OBJECTIVE
-     [Define primary research objective and key questions to answer]
-
-     2. TARGET ENTITIES & SCOPE BOUNDARIES
-     [Specify companies, technologies, geographies, and timeframes]
-
-     3. MECE SUB-QUESTIONS & REQUIRED METRICS
-     [List discrete, non-overlapping questions and specific data points needed]
-
-     4. TRIANGULATION & SOURCE REQUIREMENTS
-     - Minimum 2 independent sources required per data point
-     - Zero reliance on memory; strictly external web retrieval
-     - Mark missing or unresolved data as "Undeclared"
-     ================================================================================
-     ```
-3. **Map MECE Chunks (`outline.yaml`)**:
-   - Create `./{topic_slug}/outline.yaml`:
+2. **Create Research Plan (`{topic_slug}/research_plan.txt`)**:
+   - Plain text document outlining:
+     - Research Charter & Objective
+     - Target Entities & Scope Boundaries (geographies, demographics, clinical settings, timeframes)
+     - MECE Sub-questions & Required Metrics
+     - Triangulation & Source Standards (minimum 2 independent sources, zero memory reliance)
+3. **Create Chunk Outline (`{topic_slug}/outline.yaml`)**:
+   - Structured YAML decomposing research into 3 to 6 discrete MECE chunks:
      ```yaml
      topic: "<Topic Title>"
      slug: "<topic_slug>"
      created_at: "<YYYY-MM-DD>"
-     description: "<Brief description of scope>"
+     description: "<Summary of research scope>"
      chunks:
        - id: 1
-         slug: "market_overview"
-         title: "Market Landscape & Fundamentals"
+         slug: "<chunk_1_slug>"
+         title: "<Chunk 1 Title>"
          focus_areas:
-           - "Core definition & market sizing"
-           - "Key players & market share"
+           - "<Focus 1>"
+           - "<Focus 2>"
        - id: 2
-         slug: "financials"
-         title: "Financial Performance & Funding"
+         slug: "<chunk_2_slug>"
+         title: "<Chunk 2 Title>"
          focus_areas:
-           - "Revenue metrics & capital raised"
-           - "Valuation & unit economics"
+           - "<Focus 1>"
+           - "<Focus 2>"
      ```
-4. **Present to User & STOP (MANDATORY GATE 1)**:
-   - Display the research plan summary and chunk roadmap in chat.
-   - **CRITICAL HARD STOP**: DO NOT execute Chunk 1, DO NOT perform searches or scraping for data points, DO NOT write chunk JSONs, and DO NOT generate reports in this turn.
-   - Ask for explicit user approval before proceeding (via `ask_question` or text prompt):
-     * e.g., "Research plan and outline created. Do you approve proceeding to Chunk 1: [Title]?"
-   - **STOP HERE**. Wait for user response.
+4. **Mandatory Gate 1 (Stop & Request Approval)**:
+   - Present research plan summary and chunk roadmap in chat.
+   - Invoke `ask_question`:
+     - Question: `"Research plan and outline created for {topic}. Do you approve proceeding to Chunk 1: {chunk_1_title}?"`
+     - Options: `["(Recommended) Proceed to Chunk 1", "Modify outline or research plan"]`
+     - `is_multi_select`: `false`
+   - **HARD STOP**: End turn immediately. Do NOT search, scrape, write chunk JSON, or produce answers.
 
 ---
 
-### Phase 2: Execution (`/sherlock-deep`)
+## Phase 2: Chunk Execution (`/sherlock-deep` or Post-Approval)
 
-Triggered ONLY after explicit Phase 1 user approval, or via `/sherlock-deep`:
-*NEVER execute automatically in the same turn as Phase 1.*
+Trigger: User approves previous gate or invokes `/sherlock-deep`.
 
-#### Chunk Selection & Resume Check
-1. Read `{topic_slug}/research_plan.txt` and `{topic_slug}/outline.yaml`.
-2. Inspect `{topic_slug}/results/chunk_*.json`.
-3. Identify the **first uncompleted chunk**.
-4. If all chunks are completed, notify user and proceed to Gate 3.
+### Procedure (Strictly 1 Chunk Per Turn)
 
-#### Execution of 1 Chunk (Strictly 1 Chunk Per Turn)
-For the selected chunk:
-
-1. **Multi-Hop Search (Query Variations)**:
-   - Formulate 3–5 targeted search queries testing phrasing variations.
-   - Execute `search_web` for each query.
-   - Collect candidate URLs (prioritize primary sources, official filings, top tier reporting).
-2. **Deep Content Scraping**:
-   - For top 2–4 authoritative pages, fetch full text using `read_url_content`.
-   - Isolate verbatim text segments discussing key claims, statistics, and events.
-3. **Extraction & 2+ Source Triangulation Loop**:
-   - For each candidate data point found in scraped content:
-     - **`data_point`**: Specific, concise factual claim or metric.
-     - **`exact_url`**: Exact URL of primary scraped page.
-     - **`quoted_text`**: Verbatim sentence or paragraph directly copied from the page.
-     - **`verification_query`**: Secondary targeted search query specifically testing this fact across independent sources.
-     - **`grep_result`**: Run `search_web` with the verification query. Extract the exact matching snippet.
-     - **`confidence_score`**:
-       - `Highest`: Verbatim quote from primary source AND corroborated by secondary independent search grep.
-       - `Medium`: Found in single source, secondary search returned partial or conflicting snippets.
-       - `Low`: Vague, uncorroborated, or secondary search failed to confirm.
-     - **`triangulation_status`**:
-       - `"Flag as Triangulated"`: Confirmed across 2+ independent sources.
-       - `"Undeclared"`: Data not publicly disclosed, conflicting, or unconfirmed.
-4. **Persist Chunk JSON**:
+1. **Resume & Chunk Selection**:
+   - Read `{topic_slug}/outline.yaml` and inspect `{topic_slug}/results/chunk_*.json`.
+   - Select the lowest-numbered uncompleted chunk.
+   - If all chunks in `outline.yaml` are already completed, skip directly to Phase 3 Gate.
+2. **Multi-Hop Targeted Retrieval**:
+   - Formulate 3 to 5 targeted search queries using `search_web`.
+   - Prioritize primary authoritative sources (government reports, peer-reviewed journals, official registries, SEC/statutory filings).
+3. **Verbatim Content Scraping**:
+   - Fetch full page text for the top 2 to 4 candidate URLs using `read_url_content`.
+   - Isolate verbatim sentences containing key statistics, percentages, and factual findings.
+4. **Secondary Verification Loop (Triangulation)**:
+   - For each candidate data point:
+     - Formulate a secondary verification query.
+     - Run `search_web` with the verification query to capture an independent grep snippet.
+     - Verify consistency across both sources.
+     - Assign confidence:
+       - `"Highest"`: Primary verbatim quote + secondary independent grep match (`triangulation_status`: `"Flag as Triangulated"`).
+       - `"Medium"` / `"Low"`: Single source or conflicting snippets (`triangulation_status`: `"Undeclared"`).
+5. **Persist Chunk JSON**:
    - Write `{topic_slug}/results/chunk_{id:02d}_{slug}.json`:
      ```json
      {
@@ -200,18 +109,17 @@ For the selected chunk:
        "chunk_title": "Market Landscape & Fundamentals",
        "sections": [
          {
-           "title": "Industry Scale & Key Players",
+           "title": "Market Sizing & Growth",
            "bullets": [
-             "Global market reached $12.4B in 2024, expanding at 28.5% CAGR [DP-1].",
-             "Top three providers control 64% of total enterprise adoption [DP-2]."
+             "Market reached $14.2B in 2024, expanding at 18.5% CAGR [DP-1]."
            ],
            "data_points": [
              {
-               "data_point": "Global market reached $12.4B in 2024, expanding at 28.5% CAGR",
+               "data_point": "Market reached $14.2B in 2024, expanding at 18.5% CAGR",
                "exact_url": "https://example.com/report-2024",
-               "quoted_text": "The global market reached an estimated $12.4B in 2024 with a 28.5% CAGR.",
-               "verification_query": "\"global market\" \"$12.4B\" \"2024\" \"28.5% CAGR\"",
-               "grep_result": "...estimated global market size of $12.4B in 2024 with a CAGR of 28.5%...",
+               "quoted_text": "The market reached $14.2B in 2024, expanding at an 18.5% CAGR.",
+               "verification_query": "\"market reached $14.2B\" \"18.5% CAGR\"",
+               "grep_result": "...market reached $14.2B in 2024 with an 18.5% CAGR...",
                "confidence_score": "Highest",
                "triangulation_status": "Flag as Triangulated"
              }
@@ -220,39 +128,40 @@ For the selected chunk:
        ]
      }
      ```
-5. **Stop and Request Approval (MANDATORY GATE 2)**:
-   - Output a clean summary of the completed chunk:
-     - Verified data points count & Triangulation rate
-     - Bullet briefing with bolded numbers and `[DP-#]` references
-   - **CRITICAL HARD STOP**:
-     - DO NOT execute the next chunk in the same turn.
-     - DO NOT run `export_sherlock.py` or generate reports in the same turn.
-     - Ask the user for explicit confirmation:
-       * If more chunks remain in `outline.yaml`: "Chunk {N} complete. Do you approve proceeding to Chunk {N+1}: [Next Title]?"
-       * If all chunks are completed: "All chunks finished. Do you approve generating final deliverables (.xlsx, .csv, .docx)?"
-   - **STOP HERE**. Wait for user response.
+6. **Mandatory Gate 2 (Stop & Request Approval)**:
+   - Present chunk summary in chat: verified data points count, triangulation rate, and bullet points with bolded metrics and `[DP-#]` references.
+   - **If more chunks remain**:
+     - Invoke `ask_question`:
+       - Question: `"Chunk {id} ({title}) complete ({count} verified points). Do you approve proceeding to Chunk {next_id}: {next_title}?"`
+       - Options: `["(Recommended) Proceed to Chunk {next_id}", "Revise Chunk {id}"]`
+       - `is_multi_select`: `false`
+     - **HARD STOP**: End turn immediately. Do NOT start next chunk.
+   - **If all chunks are completed**:
+     - Invoke `ask_question`:
+       - Question: `"All {total} chunks completed ({total_dps} verified data points). Do you approve generating final deliverables (.xlsx, .csv, .docx)?"`
+       - Options: `["(Recommended) Generate Deliverables", "Revise a specific chunk"]`
+       - `is_multi_select`: `false`
+     - **HARD STOP**: End turn immediately. Do NOT run exporter in this turn.
 
 ---
 
-### Phase 3: Reporting (`/sherlock-report`)
+## Phase 3: Deliverable Generation (`/sherlock-report` or Post-Approval)
 
-Triggered ONLY after explicit user confirmation that all chunks are approved, or via `/sherlock-report`:
-*NEVER execute automatically in the same turn as chunk execution.*
+Trigger: User explicitly approves final report generation at Gate 2 or invokes `/sherlock-report`.
 
-1. **Execute Multi-Format Exporter**:
-   ```bash
-   python scripts/export_sherlock.py -d "./{topic_slug}"
-   ```
-2. **Deliverables Generated**:
-   - **`{topic_slug}_report.xlsx`**: Full 8-column data matrix with auto-styled headers, alternating rows, emerald highlights for `Highest` confidence / `Flag as Triangulated`, and text wrapping across the 8 columns:
-     `sr no`, `data point`, `exact url/subpage`, `quoted text from page`, `a search query with that data point`, `grep from running his search query`, `confidence score based on rechecking`, `triangulation status`.
-   - **`{topic_slug}_report.csv`**: Machine-readable UTF-8 CSV with all 8 columns.
-   - **`{topic_slug}_report.docx`**:
-     - Strict filter: **Highest-confidence / Triangulated data points only**.
-     - Style: Direct, human, easy-to-understand language. Zero marketing fluff. Zero hallucinations.
-     - Layout: Majority high-density bullet points instead of long paragraphs.
-     - Numbers: **All important numbers and metrics automatically bolded** (e.g., **$14.2M**, **99.4%**, **128k**, **3.5x**).
-     - Traceability: Every bullet links to `[DP-#]` and maps directly to the verified appendix table.
-3. **Present Results in Chat**:
+### Procedure
+
+1. **Locate Exporter Script**:
+   - Check `./scripts/export_sherlock.py` first.
+   - If not found, use global script: `C:\Users\u1233270\.gemini\config\skills\sherlock\scripts\export_sherlock.py`.
+2. **Execute Exporter**:
+   - Run command:
+     `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}"`
+3. **Verify Output Files**:
+   - Ensure all 3 deliverables are created:
+     - `{topic_slug}_report.xlsx`: 8-column styled data matrix with emerald highlights for triangulated points.
+     - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset.
+     - `{topic_slug}_report.docx`: Fluff-free executive dossier with all numbers/metrics bolded and citations linked to data points.
+4. **Deliver in Chat**:
+   - Present high-density executive findings directly in chat (bolded metrics, key conclusions, methodology summary).
    - Provide clickable file links (`file:///...`) to `.xlsx`, `.csv`, and `.docx`.
-   - Print a high-level executive summary of verified findings directly in chat.
