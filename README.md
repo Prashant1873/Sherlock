@@ -2,7 +2,7 @@
 name: sherlock
 user-invocable: true
 allowed-tools: view_file, write_to_file, replace_file_content, multi_replace_file_content, list_dir, grep_search, search_web, read_url_content, run_command, ask_question
-description: Deep empirical secondary research agent. Enforces 2+ source triangulation, verbatim quotation scraping, 1-chunk-per-turn execution, and mandatory user approval gates between every chunk via ask_question before deliverable export (.xlsx, .csv, .docx).
+description: Deep empirical secondary research agent. Enforces 2+ source triangulation, verbatim quotation scraping, 1-chunk-per-turn execution, mandatory user approval gates between every chunk via ask_question, executive summary with a dedicated "So What?" implications section, comparative matrices where applicable, clean formatting (no raw asterisks or arbitrary number bolding), and final deliverable export (.xlsx, .csv, .docx).
 ---
 
 # Sherlock: Empirical Deep Research Protocol
@@ -27,6 +27,14 @@ Sherlock is an empirical, zero-hallucination secondary research system. It pairs
 4. **Resumable State**:
    - Completed chunks are saved as `{topic_slug}/results/chunk_{id:02d}_{slug}.json`.
    - Before executing any chunk, inspect the `results/` directory and execute only the first uncompleted chunk. Never re-run completed chunks.
+5. **Executive Summary & "So What?" Synthesis**:
+   - The final deliverables must always feature a structured **Executive Summary** synthesizing key empirical findings, followed immediately by a dedicated **"So What?" (Strategic Implications)** section answering actionable consequences for practitioners, executives, or decision-makers.
+6. **Comparative Matrices (Query-Responsive)**:
+   - Whenever the research query requires comparison (e.g., across cohorts, competitors, geographies, clinical variants, timeframes, or treatment lines), the final dossier and spreadsheet must include structured **Comparative Matrices** (tables) detailing dimensions, benchmarks, and variances.
+7. **Clean Typography & No Raw Asterisk Artifacts**:
+   - Do NOT artificially bold every number or metric.
+   - Do NOT output raw markdown asterisks (`**`) around numbers or words into text or document exports.
+   - Maintain clean, professional prose with blue-styled citation references (`[DP-#]`).
 
 ---
 
@@ -44,6 +52,7 @@ Trigger: User invokes `/sherlock <topic>` or requests research on a new topic.
      - Research Charter & Objective
      - Target Entities & Scope Boundaries (geographies, demographics, clinical settings, timeframes)
      - MECE Sub-questions & Required Metrics
+     - Comparative Matrix Requirement: Explicitly note whether query requires comparative analysis (e.g., cross-regional benchmarks, multi-entity comparisons, cohort breakdowns) and define comparison dimensions.
      - Triangulation & Source Standards (minimum 2 independent sources, zero memory reliance)
 3. **Create Chunk Outline (`{topic_slug}/outline.yaml`)**:
    - Structured YAML decomposing research into 3 to 6 discrete MECE chunks:
@@ -52,6 +61,7 @@ Trigger: User invokes `/sherlock <topic>` or requests research on a new topic.
      slug: "<topic_slug>"
      created_at: "<YYYY-MM-DD>"
      description: "<Summary of research scope>"
+     requires_comparative_matrix: true  # or false
      chunks:
        - id: 1
          slug: "<chunk_1_slug>"
@@ -113,6 +123,14 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
            "bullets": [
              "Market reached $14.2B in 2024, expanding at 18.5% CAGR [DP-1]."
            ],
+           "comparative_matrix": {
+             "title": "Segment Growth Benchmark",
+             "headers": ["Segment", "Market Size (2024)", "CAGR", "Key Driver"],
+             "rows": [
+               ["Enterprise", "$9.2B", "21.0%", "Cloud adoption [DP-1]"],
+               ["Mid-Market", "$5.0B", "14.2%", "Cost efficiency [DP-2]"]
+             ]
+           },
            "data_points": [
              {
                "data_point": "Market reached $14.2B in 2024, expanding at 18.5% CAGR",
@@ -129,7 +147,7 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
      }
      ```
 6. **Mandatory Gate 2 (Stop & Request Approval)**:
-   - Present chunk summary in chat: verified data points count, triangulation rate, and bullet points with bolded metrics and `[DP-#]` references.
+   - Present chunk summary in chat: verified data points count, triangulation rate, and clean bullet points with `[DP-#]` references (no raw asterisks or artificial number bolding).
    - **If more chunks remain**:
      - Invoke `ask_question`:
        - Question: `"Chunk {id} ({title}) complete ({count} verified points). Do you approve proceeding to Chunk {next_id}: {next_title}?"`
@@ -151,17 +169,53 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
 
 ### Procedure
 
-1. **Locate Exporter Script**:
+1. **Synthesize Executive Summary, "So What?", and Comparative Matrices**:
+   - Before executing the export script, write `{topic_slug}/executive_summary.json`:
+     ```json
+     {
+       "executive_summary": [
+         "Synthesized core finding 1 with citation [DP-1]...",
+         "Synthesized core finding 2 with citation [DP-2]..."
+       ],
+       "so_what": [
+         "Actionable strategic/clinical implication 1 answering 'What does this mean for decisions?'...",
+         "Operational/commercial impact 2..."
+       ],
+       "comparative_matrices": [
+         {
+           "title": "Cross-Cohort Comparative Analysis",
+           "description": "Empirical comparison across target segments",
+           "headers": ["Dimension / Cohort", "Segment A", "Segment B", "Key Variance / Implication"],
+           "rows": [
+             ["Metric 1", "Value A", "Value B", "Implication [DP-1]"]
+           ]
+         }
+       ]
+     }
+     ```
+   - *Note*: If the research inquiry does not require comparative analysis, `comparative_matrices` may be an empty array `[]`.
+2. **Locate Exporter Script**:
    - Check `./scripts/export_sherlock.py` first.
    - If not found, use global script: `C:\Users\u1233270\.gemini\config\skills\sherlock\scripts\export_sherlock.py`.
-2. **Execute Exporter**:
+3. **Execute Exporter**:
    - Run command:
      `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}"`
-3. **Verify Output Files**:
-   - Ensure all 3 deliverables are created:
-     - `{topic_slug}_report.xlsx`: 8-column styled data matrix with emerald highlights for triangulated points.
-     - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset.
-     - `{topic_slug}_report.docx`: Fluff-free executive dossier with all numbers/metrics bolded and citations linked to data points.
-4. **Deliver in Chat**:
-   - Present high-density executive findings directly in chat (bolded metrics, key conclusions, methodology summary).
+4. **Verify Output Files**:
+   - Ensure deliverables are created:
+     - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing 8-column data matrix with emerald highlights for triangulated points, plus styled Comparative Matrix sheets when applicable.
+     - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset (and `{topic_slug}_report_comparative.csv` when applicable).
+     - `{topic_slug}_report.docx`: Fluff-free executive dossier containing:
+       1. Executive Summary
+       2. Strategic Implications ("So What?")
+       3. Comparative Matrices (when query requires)
+       4. Detailed Section Findings
+       5. Verified Data Points Index (Corroborated Ground Truth Table)
+       *Clean formatting: zero asterisk artifacts and no artificial number bolding.*
+5. **Deliver in Chat**:
+   - Present high-density findings directly in chat:
+     - Executive Summary
+     - Strategic Implications ("So What?")
+     - Comparative Matrix (if query requires)
+     - Key Triangulated Highlights
+     - Methodology & Triangulation Rate
    - Provide clickable file links (`file:///...`) to `.xlsx`, `.csv`, and `.docx`.
