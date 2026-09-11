@@ -15,12 +15,17 @@ Sherlock is an unhurried, zero-hallucination deep research system. It pairs mult
 
 1. **Anti-Hallucination & Empirical Grounding**: No unsupported assertions. Every claim must have an exact URL and verbatim quote from the page.
 2. **Double-Check Verification Loop**: Every extracted data point must be cross-checked with a secondary targeted verification query. The raw snippet match ("grep") is recorded, and only `Highest` confidence data survives into the final report.
-3. **1 Chunk Per Prompt Turn**: If a topic spans multiple entities, eras, or dimensions, it **MUST** be broken into discrete chunks. The agent executes **exactly 1 chunk per prompt turn** with user approval before proceeding to the next. This reserves 100% of the model's context window for deep crawling, scraping, and cross-checking per chunk.
+3. **Mandatory Approval Gates & 1 Chunk Per Turn (NON-NEGOTIABLE)**:
+   - The agent is **strictly prohibited** from running autonomous multi-chunk chains, auto-advancing across chunks, or auto-generating deliverables without user consent.
+   - **Gate 1 (Planning -> Chunk 1)**: User MUST explicitly approve `outline.yaml` before Chunk 1 begins.
+   - **Gate 2 (Chunk N -> Chunk N+1)**: User MUST explicitly approve each chunk's findings before the next chunk begins. Exactly 1 chunk per prompt turn.
+   - **Gate 3 (Execution -> Reporting)**: User MUST explicitly approve report generation before `export_sherlock.py` is invoked.
+   - Use `ask_question` or halt execution with an explicit approval prompt to block execution until user confirmation.
 4. **Resumable State**: State is preserved in `results/*.json`. Completed chunks are never re-run.
 5. **Separation of Concerns**:
-   - **Phase 1: Planning** (`outline.yaml`)
-   - **Phase 2: Execution** (`sherlock-deep`) - 1 chunk per prompt turn
-   - **Phase 3: Formatting & Reporting** (`sherlock-report`) - `.xlsx`, `.csv`, `.docx`
+   - **Phase 1: Planning** (`outline.yaml`) - Proposes roadmap, stops for approval.
+   - **Phase 2: Execution** (`sherlock-deep`) - Exactly 1 chunk per prompt turn, stops for approval.
+   - **Phase 3: Formatting & Reporting** (`sherlock-report`) - Generates `.xlsx`, `.csv`, `.docx` only after explicit confirmation.
 
 ---
 
@@ -48,15 +53,19 @@ When the user asks to research a topic or invokes `/sherlock <topic>`:
          title: "Financial Performance & Funding"
          focus_areas: ["Total capital raised", "Valuation", "Revenue metrics"]
      ```
-3. **Present to User**:
+3. **Present to User & STOP (MANDATORY GATE 1)**:
    - Display the proposed chunks in chat.
-   - Ask for confirmation or adjustments before starting execution.
+   - **CRITICAL HARD STOP**: DO NOT execute Chunk 1, DO NOT perform searches or scraping for data points, DO NOT write chunk JSONs, and DO NOT generate reports in this turn.
+   - Ask for explicit user approval before proceeding (via `ask_question` or text prompt):
+     * e.g., "Proposed outline created. Do you approve proceeding to Chunk 1: [Title]?"
+   - **STOP HERE**. Wait for user response.
 
 ---
 
 ## Phase 2: Execution (`/sherlock-deep`)
 
-Triggered automatically after Phase 1 approval, or via `/sherlock-deep`:
+Triggered ONLY after explicit Phase 1 user approval, or via `/sherlock-deep`:
+*NEVER execute automatically in the same turn as Phase 1.*
 
 ### Chunk Selection & Resume Check
 1. Read `{topic_slug}/outline.yaml`.
@@ -113,17 +122,24 @@ For the selected chunk, perform the deep empirical verification loop:
        ]
      }
      ```
-5. **Stop and Prompt for Next Chunk**:
+5. **Stop and Request Approval (MANDATORY GATE 2)**:
    - Output a clean summary of the completed chunk:
      - Verified data points count
      - Bullet briefing with bolded numbers and `[DP-#]` references
-   - **STOP HERE**. Request user approval before running the next chunk.
+   - **CRITICAL HARD STOP**:
+     - DO NOT execute the next chunk in the same turn.
+     - DO NOT run `export_sherlock.py` or generate reports in the same turn.
+     - Ask the user for explicit confirmation:
+       * If more chunks remain in `outline.yaml`: "Chunk {N} complete. Do you approve proceeding to Chunk {N+1}: [Next Title]?"
+       * If all chunks are completed: "All chunks finished. Do you approve generating final deliverables (.xlsx, .csv, .docx)?"
+   - **STOP HERE**. Wait for user response.
 
 ---
 
 ## Phase 3: Reporting (`/sherlock-report`)
 
-When all chunks are completed (or when explicitly requested via `/sherlock-report`):
+Triggered ONLY after explicit user confirmation that all chunks are approved, or via `/sherlock-report`:
+*NEVER execute automatically in the same turn as chunk execution.*
 
 1. **Execute Multi-Format Exporter**:
    ```bash
