@@ -400,9 +400,18 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
    - Before executing the export script, write `{topic_slug}/executive_summary.json`:
      ```json
      {
+       "bluf": "Single high-impact sentence synthesizing the core empirical finding and strategic takeaway.",
        "executive_summary": [
          "Synthesized core finding 1 with citation [DP-1]...",
          "Synthesized core finding 2 with citation [DP-2]..."
+       ],
+       "kpi_scorecard": [
+         {
+           "metric": "Key Metric / Dimension",
+           "value": "Empirical Value",
+           "benchmark": "Baseline / Benchmark",
+           "takeaway": "Actionable Strategic Takeaway [DP-1]"
+         }
        ],
        "so_what": [
          "Actionable strategic/clinical implication 1 answering 'What does this mean for decisions?'...",
@@ -443,16 +452,26 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
      `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}"`
 4. **Verify Output Files**:
    - Ensure deliverables are created:
-     - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing 8-column data matrix with emerald highlights for triangulated points, source authority tier tags, Evidence Quality Audit summary sheet, plus styled Comparative Matrix sheets when applicable.
+     - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing:
+       - Sheet 1: "Verified Data Points" (9 columns with Source Tier badges and emerald highlights for triangulated points)
+       - Sheet 2: "Executive Summary & Audit" (Topic metadata banner, BLUF card, KPI scorecard, Evidence Quality Audit table)
+       - Sheet 3+: Styled Comparative Matrix tabs (when applicable)
      - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset (and `{topic_slug}_report_comparative.csv` when applicable).
-     - `{topic_slug}_report.docx`: Fluff-free executive dossier containing:
-       1. Executive Summary & Evidence Quality Audit Scorecard
-       2. Strategic Implications ("So What?")
-       3. Comparative Matrices (when query requires)
-       4. Detailed Section Findings
-       5. Authoritative Conflict Adjudication Log (if applicable)
-       6. Verified Data Points Index (Corroborated Ground Truth Table with Source Tiers)
-       *Clean formatting: zero asterisk artifacts and no artificial number bolding.*
+     - `{topic_slug}_report.docx`: Publication-grade executive dossier containing:
+       - Header Preamble (Domain, Date, Scope Boundaries, Target Audience)
+       - Standalone 1-Page Briefing Memo (Self-contained executive briefing section):
+         1. Bottom-Line-Up-Front (BLUF) callout box (slate/navy left-accent border)
+         2. Executive Summary findings
+         3. Executive KPI Scorecard table
+         4. Strategic Implications ("So What?")
+         5. Evidence Quality Audit Scorecard table
+         *Followed by an explicit page break.*
+       - Deep-Dive Findings:
+         6. Comparative Analysis & Benchmarks (when query requires)
+         7. Detailed Section Findings
+         8. Authoritative Conflict Adjudication Log (when conflicts exist)
+         9. Verified Data Points Index (Corroborated Ground Truth Table with Source Tiers)
+       *Publication-grade styling: zero raw asterisks, Segoe UI typography, and styled [DP-#] citation markers.*
 5. **Deliver in Chat**:
    - Present high-density findings directly in chat:
      - Executive Summary
