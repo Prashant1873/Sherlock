@@ -468,8 +468,7 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
      ```
    - *Note*: If the research inquiry does not require comparative analysis, `comparative_matrices` may be an empty array `[]`.
 2. **Locate Exporter Script**:
-   - Check `./scripts/export_sherlock.py` first.
-   - If not found, use global script: `C:\Users\u1233270\.gemini\config\skills\sherlock\scripts\export_sherlock.py`.
+   - Locate `scripts/export_sherlock.py` relative to this skill's directory or the repository root (`./scripts/export_sherlock.py`).
 3. **Execute Exporter**:
    - Determine format selection: If user specified `--format` upfront or selected a choice at Gate 2, map it to the CLI `-f` argument:
      - All Formats → `-f all`
