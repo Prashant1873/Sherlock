@@ -1,8 +1,13 @@
 # Sherlock: Empirical Deep Research Agent
 
-> **Zero-hallucination deep secondary research protocol for AI agents where data accuracy is the absolute #1 target.**
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version: 4.0.0](https://img.shields.io/badge/Version-4.0.0-emerald.svg)](SKILL.md)
+[![Compatibility: Universal Multi-IDE](https://img.shields.io/badge/Compatibility-Antigravity%20%7C%20Claude%20%7C%20Cursor%20%7C%20Codex%20%7C%20OpenCode-blueviolet.svg)](SKILL.md)
+[![Zero Hallucinations](https://img.shields.io/badge/Triangulation-2%2B%20Sources-brightgreen.svg)](references/3_tier_hierarchy.md)
 
-Sherlock is an agent skill for AI environments (Google Antigravity, Claude Code, Gemini CLI, etc.) that turns AI into an exhaustive, publication-grade research analyst. It pairs progressive multi-hop search and verbatim source scraping with 2+ source triangulation, strict 1-chunk-per-turn context preservation, and interactive human-in-the-loop approval gates.
+> **Zero-hallucination empirical secondary research protocol for AI agents where data accuracy is the absolute #1 target.**
+
+Sherlock is an open-source agent skill designed for major AI environments (**Google Antigravity**, **Anthropic Claude Code**, **Cursor**, **OpenAI Codex**, and **OpenCode**) that elevates your AI agent into an exhaustive, publication-grade research analyst. It pairs targeted multi-hop search and verbatim source scraping with secondary verification queries, 2+ source triangulation, strict 1-chunk-per-turn context preservation, and interactive human-in-the-loop approval gates.
 
 ---
 
@@ -68,6 +73,7 @@ graph TD
     G --> H["Gate 2: Final Format Selection"]
     H -->|User selects formats| I["Phase 3: Automated Deliverable Generation"]
     I --> J["Publication Files: .docx, .xlsx, .pdf"]
+    J --> K["Gate 3: Final Review & Handoff"]
 ```
 
 ### Gate 0: Socratic Problem Formulation
@@ -98,6 +104,9 @@ When all chunks are complete, Sherlock presents an interactive menu to choose yo
 
 Once you select your preference, Sherlock automatically runs the internal export engine and provides clickable file links in chat.
 
+### Gate 3: Final Review & Handoff
+Sherlock presents high-density executive findings directly in chat, delivers clickable deliverable links, and prompts for follow-up hypotheses or additional investigations.
+
 ---
 
 ## 📦 The Three Deliverables
@@ -109,16 +118,17 @@ Designed specifically for boardrooms, investment committees, and executive direc
 - **Bottom-Line-Up-Front (BLUF)**: Navy left-accent callout box with core strategic takeaway.
 - **Executive KPI Scorecard**: 4-column summary table benchmarking key empirical findings.
 - **Standalone 1-Page Memo**: Self-contained briefing section followed by a clean page break.
+- **Strategic Implications ("So What?")**: Actionable executive takeaways answering practical business impacts.
 - **Comparative Analysis & Matrices**: Structured benchmark tables across cohorts or competitors.
 - **Authoritative Conflict Adjudication Log**: Clear accounting of variances between trusted sources without artificial smoothing.
 - **Verified Data Points Index**: Full audit table with Source Tier badges and exact verbatim quotes.
 - **Zero Markdown Asterisks Standard**: Clean corporate typography without raw asterisks (`**`) or arbitrary number bolding.
 
 ### 2. Direct Vector PDF Briefing (`.pdf`)
-A publication-ready vector PDF generated directly from the executive dossier using native Word COM vector rendering (with headless fallback):
+A publication-ready vector PDF generated directly from the executive dossier:
 - High-fidelity typography and layout.
 - Crisp vector text, lines, and borders that remain sharp at any zoom level.
-- Perfect for emailing, attaching to board packs, or printing.
+- Multi-engine rendering cascade: Word COM (Windows native), LibreOffice headless, or Playwright Chromium vector fallback (cross-platform).
 
 ### 3. Analytical Data Workbook (`.xlsx`) & CSV
 An enterprise-grade financial/analytical spreadsheet:
@@ -146,39 +156,137 @@ Sherlock was designed to overcome the fatal flaw of standard LLM research: **hal
 
 ---
 
+## 🌐 Universal Multi-IDE Compatibility
+
+Sherlock supports all leading AI developer runtimes through standardized frontmatter and dynamic tool mapping:
+
+| Runtime | Skill Installation Path | Tool Mapping |
+|---|---|---|
+| **Google Antigravity** | `~/.gemini/config/skills/sherlock` or `.agents/skills/sherlock` | `ask_question`, `search_web`, `read_url_content`, `run_command` |
+| **Anthropic Claude Code** | `~/.claude/skills/sherlock` or `.claude/skills/sherlock` | `AskFollowupQuestion`, `WebSearch`, `WebFetch`, `Bash` |
+| **Cursor** | `.cursor/skills/sherlock` or `.cursorrules` | `ask_followup_question`, `web_search`, `fetch`, `terminal` |
+| **OpenAI Codex** | `.codex/skills/sherlock` or `.agents/skills/sherlock` | Native terminal prompt, web search, scraper, `run_command` |
+| **OpenCode** | `.opencode/skills/sherlock` or `.agents/skills/sherlock` | `ask_question`, `web_search`, `read_url_content`, `run_command` |
+
+---
+
 ## 🔧 Installation & Setup
 
-### Repository Structure
-```text
-sherlock/
-  ├── SKILL.md                          # Agent Skill Contract & Execution Protocol
-  ├── scripts/
-  │   ├── export_sherlock.py            # Publication-grade multi-format export engine
-  │   └── test_export_pipeline.py       # Automated verification test suite
-  ├── templates/
-  │   ├── research_plan_template.txt    # Binding research charter contract template
-  │   └── executive_summary_template.json # Executive BLUF, scorecard & datasets schema
-  ├── references/
-  │   ├── 3_tier_hierarchy.md           # Source authority hierarchy & triangulation rules
-  │   └── source_whitelists.md          # Curated domain registries & search launchpads
-  └── README.md                         # Practical user guide
-```
+### 1-Command Installation
 
-### Option 1: Global Agent Skill (Recommended)
-Place the skill files into your personal AI configuration directory:
+#### Google Antigravity
 ```bash
 git clone https://github.com/Prashant1873/Sherlock.git ~/.gemini/config/skills/sherlock
 ```
+*Windows PowerShell:*
+```powershell
+git clone https://github.com/Prashant1873/Sherlock.git "$HOME\.gemini\config\skills\sherlock"
+```
 
-### Option 2: Workspace Project Skill
-Include Sherlock directly inside your project repository:
+#### Anthropic Claude Code
+```bash
+git clone https://github.com/Prashant1873/Sherlock.git ~/.claude/skills/sherlock
+```
+
+#### Cursor
+```bash
+git clone https://github.com/Prashant1873/Sherlock.git .cursor/skills/sherlock
+```
+
+#### OpenAI Codex / OpenCode
 ```bash
 git clone https://github.com/Prashant1873/Sherlock.git .agents/skills/sherlock
 ```
 
-### Environment Requirements
-Sherlock uses standard Python libraries for generating files:
+### Python Dependencies
+
+Install the export engine libraries:
+
 ```bash
-pip install openpyxl python-docx pywin32 playwright
+pip install openpyxl python-docx pandas playwright
+playwright install chromium
 ```
-*(On Windows, `pywin32` provides native Word COM vector PDF export. If running in headless or non-Windows environments, Playwright provides the cross-platform vector PDF fallback).*
+*(On Windows, `pywin32` is optional for native Word COM vector PDF export. If running in Linux/macOS or headless environments, Playwright or LibreOffice automatically handles vector PDF generation).*
+
+---
+
+## 🤖 Auto-Activation & Multi-IDE Rules Integration
+
+Sherlock supports **zero-command semantic auto-activation**. When configured, the host AI agent automatically detects prompts requiring empirical secondary research, clinical benchmarking, or market due diligence, and enters Sherlock Phase 0 Intake—while remaining completely dormant on everyday queries.
+
+### Integration Templates (`rules/`)
+
+Drop the matching template from `rules/` into your workspace root or global agent config:
+
+| IDE Platform | Template File | Installation Target |
+|---|---|---|
+| **Google Antigravity** | `rules/GEMINI.md` | Workspace `GEMINI.md` or `.agents/GEMINI.md` |
+| **Anthropic Claude Code** | `rules/CLAUDE.md` | Workspace `CLAUDE.md` or `~/.claude/CLAUDE.md` |
+| **Cursor** | `rules/.cursorrules` | Workspace `.cursorrules` or `.cursor/rules/` |
+| **OpenAI Codex / OpenCode** | `rules/AGENTS.md` | Workspace `AGENTS.md` or `.agents/AGENTS.md` |
+
+### Trigger Semantics
+
+- **Positive Activation**: Comprehensive secondary research, clinical/pharma trial benchmarking, market sizing/TAM analysis, M&A due diligence, enterprise IT TCO comparisons, 2+ source triangulation, or requests requiring publication deliverables (.docx, .xlsx, .pdf).
+- **Negative Dormancy Boundaries**: Casual trivia, simple factual definitions ("What is mRNA?"), quick syntax lookups ("Python dict loop"), shallow summaries, or creative drafting.
+
+---
+
+## 🧪 Verification & Test Suite
+
+Sherlock includes an automated end-to-end test suite verifying link integrity, workflow gate protocols, privacy sanitization, auto-activation rules, and export execution:
+
+```bash
+# 1. Link & cross-reference integrity (9 files)
+python scripts/test_link_integrity.py
+
+# 2. Workflow schema & approval gate audit
+python scripts/test_workflow_audit.py
+
+# 3. Privacy, local-path & secret sanitization
+python scripts/test_privacy_audit.py
+
+# 4. Auto-activation semantic triggers & rules audit
+python scripts/test_auto_activation.py
+
+# 5. Multi-format export pipeline regression
+python scripts/test_export_pipeline.py
+```
+
+---
+
+## 📁 Repository Structure
+
+```text
+sherlock/
+  ├── LICENSE                               # Permissive MIT License
+  ├── README.md                             # Comprehensive documentation & setup guide
+  ├── SKILL.md                              # Root Universal Agent Skill Specification
+  ├── skills/
+  │   └── sherlock/
+  │       └── SKILL.md                      # Packaged skill file for multi-IDE discovery
+  ├── rules/
+  │   ├── CLAUDE.md                         # Anthropic Claude Code auto-activation rules
+  │   ├── GEMINI.md                         # Google Antigravity auto-activation rules
+  │   ├── .cursorrules                      # Cursor auto-activation rules
+  │   └── AGENTS.md                         # OpenAI Codex & OpenCode auto-activation rules
+  ├── scripts/
+  │   ├── export_sherlock.py                # Publication-grade multi-format export engine
+  │   ├── test_export_pipeline.py           # Exporter regression test suite
+  │   ├── test_link_integrity.py            # Link & path cross-reference validator
+  │   ├── test_workflow_audit.py            # Protocol schema & gate validator
+  │   ├── test_privacy_audit.py             # Privacy & secret sanitization validator
+  │   └── test_auto_activation.py           # Semantic trigger & rule validator
+  ├── templates/
+  │   ├── research_plan_template.txt        # Binding research charter contract template
+  │   └── executive_summary_template.json   # Executive BLUF, scorecard & datasets schema
+  └── references/
+      ├── 3_tier_hierarchy.md               # Source authority hierarchy & triangulation rules
+      └── source_whitelists.md              # Curated domain registries & search launchpads
+```
+
+---
+
+## 📄 License
+
+Sherlock is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Sherlock Contributors.

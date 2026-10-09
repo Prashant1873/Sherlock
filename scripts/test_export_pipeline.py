@@ -308,6 +308,15 @@ def verify_outputs():
     assert "Source Tier" in all_table_text, "Source Tier column missing in DOCX data points index!"
     print("[OK] Verified Data Points Index with Source Tiers verified in DOCX.")
 
+    # Verify zero unrendered raw markdown asterisks in DOCX
+    for p in doc.paragraphs:
+        assert "**" not in p.text, f"Unrendered '**' detected in DOCX paragraph: {p.text}"
+    for t in doc.tables:
+        for row in t.rows:
+            for cell in row.cells:
+                assert "**" not in cell.text, f"Unrendered '**' detected in DOCX table cell: {cell.text}"
+    print("[OK] Zero raw markdown asterisks ('**') verified in DOCX paragraphs and tables.")
+
     # 2. Validate XLSX
     wb = openpyxl.load_workbook(xlsx_path)
     sheet_names = wb.sheetnames
@@ -315,6 +324,14 @@ def verify_outputs():
     assert "Executive Summary & Audit" in sheet_names, "Missing 'Executive Summary & Audit' sheet!"
     assert "Charts & Datasets" in sheet_names, "Missing 'Charts & Datasets' sheet!"
     print(f"[OK] Multi-sheet XLSX verified with sheets: {sheet_names}")
+
+    # Verify zero unrendered asterisks in XLSX
+    for sheet in wb.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str):
+                    assert "**" not in cell.value, f"Unrendered '**' in {sheet.title} cell: {cell.value}"
+    print("[OK] Zero raw markdown asterisks ('**') verified in XLSX sheets.")
 
     # Verify Sheet 1 columns
     ws_dps = wb["Verified Data Points"]
@@ -344,13 +361,14 @@ def test_selective_formats():
     """Tests selective format flag execution."""
     base_name = os.path.join(TEST_DIR, f"{os.path.basename(TEST_DIR)}_report")
     
-    # Clean previous outputs
-    for ext in (".docx", ".xlsx", ".csv", ".pdf"):
-        p = f"{base_name}{ext}"
-        if os.path.isfile(p):
-            os.remove(p)
+    def clean_outputs():
+        for ext in (".docx", ".xlsx", ".csv", ".pdf"):
+            p = f"{base_name}{ext}"
+            if os.path.isfile(p):
+                os.remove(p)
 
-    # Test --format pdf
+    # 1. Test --format pdf
+    clean_outputs()
     print("\n[*] Testing selective export: --format pdf")
     run_exporter(format_arg="pdf")
     assert os.path.isfile(f"{base_name}.pdf"), "PDF not generated in --format pdf"
@@ -358,12 +376,42 @@ def test_selective_formats():
     assert not os.path.isfile(f"{base_name}.docx"), "DOCX should have been cleaned up in --format pdf"
     print("[OK] Selective --format pdf verified.")
 
-    # Test --format xlsx
+    # 2. Test --format xlsx
+    clean_outputs()
     print("\n[*] Testing selective export: --format xlsx")
     run_exporter(format_arg="xlsx")
     assert os.path.isfile(f"{base_name}.xlsx"), "XLSX not generated in --format xlsx"
     assert not os.path.isfile(f"{base_name}.docx"), "DOCX should not exist in --format xlsx"
     print("[OK] Selective --format xlsx verified.")
+
+    # 3. Test --format docx
+    clean_outputs()
+    print("\n[*] Testing selective export: --format docx")
+    run_exporter(format_arg="docx")
+    assert os.path.isfile(f"{base_name}.docx"), "DOCX not generated in --format docx"
+    assert not os.path.isfile(f"{base_name}.xlsx"), "XLSX should not exist in --format docx"
+    assert not os.path.isfile(f"{base_name}.pdf"), "PDF should not exist in --format docx"
+    print("[OK] Selective --format docx verified.")
+
+    # 4. Test combined subsets: --format docx,pdf
+    clean_outputs()
+    print("\n[*] Testing combined subset export: --format docx,pdf")
+    run_exporter(format_arg="docx,pdf")
+    assert os.path.isfile(f"{base_name}.docx"), "DOCX not generated in --format docx,pdf"
+    assert os.path.isfile(f"{base_name}.pdf"), "PDF not generated in --format docx,pdf"
+    assert not os.path.isfile(f"{base_name}.xlsx"), "XLSX should not exist in --format docx,pdf"
+    print("[OK] Combined --format docx,pdf verified.")
+
+
+def test_negative_cases():
+    """Tests error handling for missing or malformed inputs."""
+    print("\n[*] Testing negative case: non-existent directory")
+    exporter_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "export_sherlock.py"))
+    res = subprocess.run([
+        sys.executable, exporter_script, "non_existent_topic_xyz123"
+    ], capture_output=True, text=True)
+    assert res.returncode != 0, "Exporter should exit non-zero for non-existent directory!"
+    print("[OK] Negative test non-existent directory verified.")
 
 
 def cleanup():
@@ -383,6 +431,8 @@ def main():
         verify_outputs()
         print("[*] Verifying selective format flags...")
         test_selective_formats()
+        print("[*] Verifying negative error handling...")
+        test_negative_cases()
     finally:
         cleanup()
 
