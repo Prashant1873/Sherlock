@@ -200,6 +200,44 @@ When formulating sub-questions and chunk outlines in Phase 1, the agent MUST adh
 
 ---
 
+## Curated Domain Source Whitelist Registries
+
+When executing research, search formulation MUST prioritize gold-standard, high-authority domain repositories before falling back to broad web queries:
+
+### 1. Pharma & Healthcare (`pharma`)
+- **Regulatory Authorities**: `fda.gov`, `ema.europa.eu`, `pmda.go.jp`, `mhra.gov.uk`
+- **Clinical Trial Registries**: `clinicaltrials.gov`, `who.int/trialsearch`, `isrctn.com`
+- **Peer-Reviewed Biomedical Journals**: `pubmed.ncbi.nlm.nih.gov`, `ncbi.nlm.nih.gov/pmc`, `thelancet.com`, `nejm.org`, `jamanetwork.com`, `nature.com`
+- **Public Health & Professional Societies**: `who.int`, `cdc.gov`, `nih.gov`, `esmo.org`, `asco.org`
+
+### 2. Technology & Enterprise IT (`tech`)
+- **Official Documentation**: `docs.*`, `learn.microsoft.com`, `cloud.google.com/docs`, `aws.amazon.com/documentation`, `kubernetes.io/docs`
+- **Technical Standards & Protocols**: `ietf.org/rfc`, `w3.org`, `iso.org`, `nist.gov`
+- **Academic & Systems Research**: `arxiv.org`, `ieeexplore.ieee.org`, `dl.acm.org`, `usenix.org`
+- **Open-Source Repositories**: `github.com` (official release tags, architecture RFCs), `apache.org`
+
+### 3. Finance, PE & M&A (`finance`)
+- **Statutory & Securities Filings**: `sec.gov/edgar` (10-K, 10-Q, 8-K filings), `fca.org.uk`, `esma.europa.eu`
+- **Central Banks & Economic Databases**: `fred.stlouisfed.org`, `federalreserve.gov`, `ecb.europa.eu`, `bis.org`
+- **Multilateral Financial Institutions**: `worldbank.org`, `imf.org`, `oecd.org`, `wto.org`
+- **Primary Exchange Disclosures**: `nyse.com`, `nasdaq.com`, `londonstockexchange.com`
+
+### 4. Legal, Regulatory & Public Policy (`legal`)
+- **Statutory & Regulatory Portals**: `congress.gov`, `govinfo.gov`, `federalregister.gov`, `eur-lex.europa.eu`, `legislation.gov.uk`
+- **Judicial & Jurisprudence Portals**: `supremecourt.gov`, `curia.europa.eu`, `uscourts.gov`
+- **Policy Research & Oversight**: `crsreports.congress.gov`, `gao.gov`
+
+### 5. Public Administration & Governance (`admin`)
+- **Government Spending & Audit Portals**: `usaspending.gov`, `gao.gov`, `oig.*.gov`, `fiscal.treasury.gov`
+- **Statistical Agencies**: `census.gov`, `bls.gov`, `bea.gov`, `ons.gov.uk`, `eurostat.ec.europa.eu`
+
+### 6. Artificial Intelligence & Machine Learning (`ai`)
+- **Benchmarks & Repositories**: `arxiv.org/abs/*`, `paperswithcode.com`, `huggingface.co/leaderboards`, `lmarena.ai`
+- **Primary Laboratory Disclosures**: `openai.com/research`, `anthropic.com/research`, `deepmind.google/research`, `ai.meta.com/research`
+- **AI Safety & Governance Bodies**: `airc.nist.gov`, `cset.georgetown.edu`, `oecd.ai`
+
+---
+
 ## Phase 2: Chunk Execution (`/sherlock-deep` or Post-Approval)
 
 Trigger: User approves previous gate or invokes `/sherlock-deep`.
@@ -210,9 +248,12 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
    - Read `{topic_slug}/outline.yaml` and inspect `{topic_slug}/results/chunk_*.json`.
    - Select the lowest-numbered uncompleted chunk.
    - If all chunks in `outline.yaml` are already completed, skip directly to Phase 3 Gate.
-2. **Multi-Hop Targeted Retrieval**:
-   - Formulate 3 to 5 targeted search queries using `search_web`.
-   - Prioritize primary authoritative sources (government reports, peer-reviewed journals, official registries, SEC/statutory filings).
+2. **Multi-Hop Targeted Retrieval (Whitelist Search Protocol)**:
+   - Formulate 3 to 5 targeted search queries using `search_web` following the 3-wave protocol:
+     - **Wave 1 (Domain Whitelist Scoping)**: Formulate initial 2-3 queries explicitly injecting domain-specific `site:` operators from the active domain whitelist (e.g., `site:clinicaltrials.gov OR site:fda.gov "<query>"` for pharma; `site:sec.gov/edgar "<query>"` for finance; `site:arxiv.org "<query>"` for AI).
+     - **Wave 2 (Authoritative Institutional Search)**: Formulate queries scoped to official `.gov`, `.edu`, or international treaty/standards organization domains.
+     - **Wave 3 (Open Web Fallback & Grep Verification)**: Query broader web domains solely for corroborating secondary grep snippets or when primary registries yield uncorroborated single points.
+   - Candidate URLs retrieved outside the whitelist must be flagged as lower authority and scrutinized.
 3. **Verbatim Content Scraping**:
    - Fetch full page text for the top 2 to 4 candidate URLs using `read_url_content`.
    - Isolate verbatim sentences containing key statistics, percentages, and factual findings.
