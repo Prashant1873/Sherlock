@@ -2,7 +2,7 @@
 name: sherlock
 user-invocable: true
 allowed-tools: view_file, write_to_file, replace_file_content, multi_replace_file_content, list_dir, grep_search, search_web, read_url_content, run_command, ask_question
-description: Deep empirical secondary research agent. Enforces absolute data accuracy as the #1 target (zero tolerance for inaccuracies), 2+ source triangulation, verbatim quotation scraping, 1-chunk-per-turn execution, mandatory user approval gates between every chunk via ask_question, executive summary with a dedicated "So What?" implications section, comparative matrices where applicable, clean formatting (no raw asterisks or arbitrary number bolding), and final deliverable export (.xlsx, .csv, .docx).
+description: Deep empirical secondary research agent. Enforces absolute data accuracy as the #1 target (zero tolerance for inaccuracies), 2+ source triangulation, verbatim quotation scraping, 1-chunk-per-turn execution, mandatory user approval gates between every chunk via ask_question, executive summary with a dedicated "So What?" implications section, comparative matrices where applicable, clean formatting (no raw asterisks or arbitrary number bolding), direct vector PDF generation, and multi-format deliverable export (.docx, .xlsx, .pdf).
 ---
 
 # Sherlock: Empirical Deep Research Protocol
@@ -44,11 +44,15 @@ Sherlock is an empirical, zero-hallucination secondary research system where **d
 
 ---
 
-## Phase 0: Socratic Intake & Problem Formulation (`/sherlock <topic> [domain]`)
+## Phase 0: Socratic Intake & Problem Formulation (`/sherlock <topic> [domain] [--format all|docx|xlsx|pdf] [--include-datasets]`)
 
-Trigger: User invokes `/sherlock <topic> [domain]` or requests empirical research on a topic.
+Trigger: User invokes `/sherlock <topic> [domain]` (with optional flags) or requests empirical research on a topic.
 
-Optional domain parameter: `pharma`, `tech`, `finance`, `legal`, `admin`, `ai`, `general`.
+Optional parameters & prompt flags:
+- Domain parameter: `pharma`, `tech`, `finance`, `legal`, `admin`, `ai`, `general`.
+- Format flag: `--format all` (default), `--format docx`, `--format xlsx`, `--format pdf`, or comma-separated subsets (e.g., `--format docx,pdf`).
+- Dataset flag: `--include-datasets` (extracts structured tabular datasets into dedicated Excel tabs with native visual charts).
+*(Note: Users interact purely through the AI skill in chat. All script executions and conversions are handled transparently by the agent—users never execute terminal scripts).*
 
 ### Procedure
 
@@ -92,7 +96,7 @@ Trigger: User responds to Gate 0 with problem context, domain choice, and scope 
      1. EXECUTIVE CONTEXT & PRESENTATION STANDARD
         - Target Audience: {From Phase 0 Intake}
         - Core Decision at Stake: {From Phase 0 Intake}
-        - Presentation Requirement: Publication-grade executive briefing (.docx, .xlsx)
+        - Presentation Requirement: Publication-grade executive briefing (.docx, .xlsx, .pdf) [Datasets & Native Charts: Active if requested]
 
      2. RESEARCH SCOPE & BOUNDARIES
         - In-Scope Dimensions: {Geographies, demographics, segments, timeframes}
@@ -383,8 +387,8 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
      - **HARD STOP**: End turn immediately. Do NOT start next chunk.
    - **If all chunks are completed**:
      - Invoke `ask_question`:
-       - Question: `"All {total} chunks completed ({total_dps} verified data points). Do you approve generating final deliverables (.xlsx, .csv, .docx)?"`
-       - Options: `["(Recommended) Generate Deliverables", "Revise a specific chunk"]`
+       - Question: `"All {total} chunks completed ({total_dps} verified data points). Select deliverable formats to generate:"`
+        - Options: `["(Recommended) All Formats (.docx, .xlsx, .pdf)", "Executive Word Dossier only (.docx)", "Analytical Data Spreadsheet only (.xlsx)", "Vector PDF Briefing only (.pdf)", "Word + PDF Dossiers (.docx, .pdf)", "Revise a specific chunk"]`
        - `is_multi_select`: `false`
      - **HARD STOP**: End turn immediately. Do NOT run exporter in this turn.
 
@@ -427,6 +431,25 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
            ]
          }
        ],
+       "datasets": [
+         {
+           "title": "Historical & Projected Market Revenue (2020-2026)",
+           "chart_type": "column",
+           "x_axis_title": "Year",
+           "y_axis_title": "Revenue ($B)",
+           "headers": ["Year", "Total Market ($B)", "Enterprise Segment ($B)"],
+           "rows": [
+             ["2020", 4.2, 2.5],
+             ["2021", 5.8, 3.4],
+             ["2022", 7.6, 4.6],
+             ["2023", 9.8, 6.1],
+             ["2024", 12.4, 7.9],
+             ["2025 (Est)", 15.2, 9.8],
+             ["2026 (Proj)", 18.5, 12.1]
+           ],
+           "data_point_refs": ["DP-1", "DP-3"]
+         }
+       ],
        "evidence_quality_audit": {
          "total_data_points": 42,
          "triangulated_count": 38,
@@ -448,14 +471,22 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
    - Check `./scripts/export_sherlock.py` first.
    - If not found, use global script: `C:\Users\u1233270\.gemini\config\skills\sherlock\scripts\export_sherlock.py`.
 3. **Execute Exporter**:
-   - Run command:
-     `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}"`
+   - Determine format selection: If user specified `--format` upfront or selected a choice at Gate 2, map it to the CLI `-f` argument:
+     - All Formats → `-f all`
+     - Word Dossier only → `-f docx`
+     - Spreadsheet only → `-f xlsx`
+     - Vector PDF only → `-f pdf`
+     - Word + PDF → `-f docx,pdf`
+   - Run command transparently via `run_command` on behalf of the user:
+     `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}" -f "{format_flag}"`
+   *(Important: End-users never execute terminal scripts. The agent executes this command automatically).*
 4. **Verify Output Files**:
-   - Ensure deliverables are created:
+   - Verify requested deliverables are created:
      - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing:
        - Sheet 1: "Verified Data Points" (9 columns with Source Tier badges and emerald highlights for triangulated points)
        - Sheet 2: "Executive Summary & Audit" (Topic metadata banner, BLUF card, KPI scorecard, Evidence Quality Audit table)
        - Sheet 3+: Styled Comparative Matrix tabs (when applicable)
+       - Sheet "Charts & Datasets": Dedicated worksheet containing structured series tables and native OpenPyXL visual charts (Bar, Column, Line) dynamically bound to data points (when --include-datasets is active)
      - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset (and `{topic_slug}_report_comparative.csv` when applicable).
      - `{topic_slug}_report.docx`: Publication-grade executive dossier containing:
        - Header Preamble (Domain, Date, Scope Boundaries, Target Audience)
@@ -472,6 +503,7 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
          8. Authoritative Conflict Adjudication Log (when conflicts exist)
          9. Verified Data Points Index (Corroborated Ground Truth Table with Source Tiers)
        *Publication-grade styling: zero raw asterisks, Segoe UI typography, and styled [DP-#] citation markers.*
+     - `{topic_slug}_report.pdf`: Direct vector PDF document generated via native Word COM engine (or headless fallback), preserving all formatting, borders, callouts, and page breaks.
 5. **Deliver in Chat**:
    - Present high-density findings directly in chat:
      - Executive Summary
@@ -479,4 +511,4 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
      - Comparative Matrix (if query requires)
      - Key Triangulated Highlights
      - Evidence Quality Audit Scorecard (Tier 1/2/3 breakdown %, Triangulation Rate %, Conflicts Adjudicated)
-   - Provide clickable file links (`file:///...`) to `.xlsx`, `.csv`, and `.docx`.
+   - Provide clickable file links (`file:///...`) for all generated deliverables (.docx, .xlsx, .pdf).
