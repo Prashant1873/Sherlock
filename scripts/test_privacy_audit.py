@@ -12,6 +12,8 @@ import re
 import sys
 from pathlib import Path
 
+import subprocess
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Files and extensions to inspect
@@ -20,8 +22,8 @@ INSPECT_EXTS = {".md", ".py", ".json", ".txt", ".yaml", ".yml", ".sh", ".ps1"}
 # Directories to skip
 SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".venv", "venv", "node_modules"}
 
-# Specific files to skip (binary/ephemeral)
-SKIP_FILES = {".gitignore"}
+# Specific files to skip
+SKIP_FILES = set()
 
 # Sensitive pattern definitions
 PRIVACY_PATTERNS = [
@@ -99,14 +101,81 @@ def audit_file(path: Path):
     return violations
 
 
+def check_gitignore_hidden():
+    """Verifies .gitignore is deleted from disk and not tracked by git."""
+    issues = []
+    gi_path = REPO_ROOT / ".gitignore"
+    if gi_path.exists():
+        issues.append("Root .gitignore file exists on disk (must be deleted to hide from GitHub).")
+
+    try:
+        res = subprocess.run(
+            ["git", "ls-files", ".gitignore"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        if res.stdout.strip():
+            issues.append(f".gitignore is tracked in git index: {res.stdout.strip()}")
+    except Exception as e:
+        issues.append(f"Failed to query git ls-files: {e}")
+
+    return issues
+
+
+def check_git_exclude_rules():
+    """Verifies .git/info/exclude exists and contains necessary exclusion rules."""
+    issues = []
+    exclude_path = REPO_ROOT / ".git" / "info" / "exclude"
+    if not exclude_path.exists():
+        issues.append(".git/info/exclude file does not exist.")
+        return issues
+
+    content = exclude_path.read_text(encoding="utf-8")
+    required_patterns = [
+        ".planning/",
+        "great_ideas.md",
+        "neural_map.md",
+        "*.xlsx",
+        "*.docx",
+        "*.pdf",
+        "test_*",
+    ]
+    for pat in required_patterns:
+        if pat not in content:
+            issues.append(f"Missing required pattern in .git/info/exclude: '{pat}'")
+
+    return issues
+
+
 def main():
     print("=" * 70)
-    print("Sherlock Privacy & Secret Sanitization Validator")
+    print("Sherlock Privacy, Secret Sanitization & Hygiene Validator")
     print("=" * 70)
 
-    target_files = collect_target_files()
+    # 1. Check .gitignore hiding and .git/info/exclude integrity
     total_violations = 0
+    gi_issues = check_gitignore_hidden()
+    if gi_issues:
+        print("\n[FAIL] Gitignore Hiding Audit:")
+        for issue in gi_issues:
+            print(f"  {issue}")
+        total_violations += len(gi_issues)
+    else:
+        print("[CHECK] Root .gitignore hidden from git tree ... PASS")
 
+    exclude_issues = check_git_exclude_rules()
+    if exclude_issues:
+        print("\n[FAIL] Git Info/Exclude Audit:")
+        for issue in exclude_issues:
+            print(f"  {issue}")
+        total_violations += len(exclude_issues)
+    else:
+        print("[CHECK] .git/info/exclude pattern rules ... PASS")
+
+    # 2. File content privacy audit
+    target_files = collect_target_files()
     for tf in target_files:
         rel = tf.relative_to(REPO_ROOT)
         violations = audit_file(tf)
@@ -120,11 +189,11 @@ def main():
 
     print("\n" + "=" * 70)
     if total_violations == 0:
-        print(f"RESULT: ALL {len(target_files)} FILES SANITIZED. (0 leaks detected)")
+        print(f"RESULT: ALL {len(target_files)} FILES SANITIZED & HYGIENE VERIFIED. (0 leaks)")
         print("=" * 70)
         sys.exit(0)
     else:
-        print(f"RESULT: PRIVACY AUDIT FAILED with {total_violations} leaks.")
+        print(f"RESULT: HYGIENE & PRIVACY AUDIT FAILED with {total_violations} issues.")
         print("=" * 70)
         sys.exit(1)
 
