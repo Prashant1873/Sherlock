@@ -17,10 +17,11 @@ Sherlock is an empirical, zero-hallucination secondary research system where **d
    - If sources conflict, report the conflicting figures explicitly with distinct source attribution rather than attempting to synthesize, interpolate, or average them.
 2. **Mandatory Approval Gates (Non-Negotiable)**:
    - Autonomous multi-chunk execution is strictly prohibited.
+   - Never execute Phase 1 without obtaining user answers at Gate 0 (Socratic Intake).
    - Never execute Chunk 1 during Phase 1 (Planning).
    - Never execute more than 1 chunk per prompt turn.
    - Every transition between phases and chunks requires explicit approval via the `ask_question` tool.
-   - Even if the user prompt asks for "answer", "methodology", or "expected output" upfront, you MUST stop at Gate 1 and obtain user approval before executing Chunk 1.
+   - Even if the user prompt asks for "answer", "methodology", or "expected output" upfront, you MUST stop at Gate 0 / Gate 1 and obtain user approval before executing research chunks.
 3. **Zero Parametric Memory**:
    - All factual claims and metrics must originate directly from web pages retrieved during execution.
    - Speculation, unverified extrapolations, or uncorroborated assertions are strictly banned.
@@ -42,22 +43,68 @@ Sherlock is an empirical, zero-hallucination secondary research system where **d
 
 ---
 
-## Phase 1: Planning (`/sherlock <topic>`)
+## Phase 0: Socratic Intake & Problem Formulation (`/sherlock <topic>`)
 
-Trigger: User invokes `/sherlock <topic>` or requests research on a new topic.
+Trigger: User invokes `/sherlock <topic>` or requests empirical research on a topic.
+
+### Procedure
+
+1. **Intake Cross-Questioning**:
+   - Do NOT immediately generate `research_plan.txt` or `outline.yaml`.
+   - Do NOT execute web searches or scrape candidate URLs.
+   - Formulate structured clarifying questions using `ask_question` probing four non-negotiable intake dimensions:
+     1. **Target Audience & Presentation Standard**: Who is reading this deliverable (e.g., C-Suite Executives, Board of Directors, Technical Architects, Clinical Specialists, Regulatory Officers)?
+     2. **Core Decision at Stake**: What strategic, clinical, financial, or operational decision depends directly on the accuracy of these findings?
+     3. **Scope Boundaries & Exclusions**: What specific geographies, timeframes (e.g., 2021-2026), demographics, or sub-topics are strictly in-scope versus explicitly excluded?
+     4. **Baseline Knowledge & Hypotheses to Test**: What existing baseline data or working hypotheses should be empirically verified, pressure-tested, or disproved?
+2. **Mandatory Gate 0 (Stop & Await User Response)**:
+   - Invoke `ask_question` with the intake questionnaire.
+   - **HARD STOP**: End turn immediately. Do NOT generate the research plan or proceed to Phase 1 until the user responds with their intake answers.
+
+---
+
+## Phase 1: Planning (Post-Intake Gate 0)
+
+Trigger: User responds to Gate 0 with problem context and scope answers.
 
 ### Procedure
 
 1. **Slugify Topic**:
    - Convert topic into a clean lowercase slug with underscores: `{topic_slug}` (e.g., `diabetes_type2_prevalence_india`).
    - Create directories: `./{topic_slug}/` and `./{topic_slug}/results/`.
-2. **Create Research Plan (`{topic_slug}/research_plan.txt`)**:
-   - Plain text document outlining:
-     - Research Charter & Objective
-     - Target Entities & Scope Boundaries (geographies, demographics, clinical settings, timeframes)
-     - MECE Sub-questions & Required Metrics
-     - Comparative Matrix Requirement: Explicitly note whether query requires comparative analysis (e.g., cross-regional benchmarks, multi-entity comparisons, cohort breakdowns) and define comparison dimensions.
-     - Triangulation & Source Standards (minimum 2 independent sources, zero memory reliance)
+2. **Create Research Charter & Hypothesis Contract (`{topic_slug}/research_plan.txt`)**:
+   - Plain text document formalizing the user's intake answers into a binding research contract:
+     ```
+     ================================================================================
+     RESEARCH CHARTER & HYPOTHESIS CONTRACT: {Topic Title}
+     ================================================================================
+     Date: {YYYY-MM-DD}
+     Topic Slug: {topic_slug}
+
+     1. EXECUTIVE CONTEXT & PRESENTATION STANDARD
+        - Target Audience: {From Phase 0 Intake}
+        - Core Decision at Stake: {From Phase 0 Intake}
+        - Presentation Requirement: Publication-grade executive briefing (.docx, .xlsx)
+
+     2. RESEARCH SCOPE & BOUNDARIES
+        - In-Scope Dimensions: {Geographies, demographics, segments, timeframes}
+        - Explicit Exclusions: {Out-of-scope areas captured in Phase 0}
+
+     3. EMPIRICAL HYPOTHESES TO TEST
+        - [HYP-1]: {Baseline hypothesis or claim to test against empirical data}
+        - [HYP-2]: {Secondary hypothesis or benchmark to validate}
+
+     4. MECE SUB-QUESTIONS & REQUIRED METRICS
+        - Sub-question 1 & Target Metrics
+        - Sub-question 2 & Target Metrics
+        - Comparative Matrix Requirement: {true/false, dimensions to benchmark}
+
+     5. EMPIRICAL INTEGRITY & TRIANGULATION STANDARDS
+        - Absolute Data Accuracy (#1 Target): Zero tolerance for approximations.
+        - Triangulation Requirement: 2+ independent sources with verbatim quotes.
+        - Zero Parametric Memory: All metrics directly retrieved from web sources.
+     ================================================================================
+     ```
 3. **Create Chunk Outline (`{topic_slug}/outline.yaml`)**:
    - Structured YAML decomposing research into 3 to 6 discrete MECE chunks:
      ```yaml
