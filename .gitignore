@@ -13,7 +13,6 @@ results/
 test_*/
 
 # Python artifacts & virtual environments
-scripts/
 __pycache__/
 *.py[cod]
 *$py.class

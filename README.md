@@ -148,24 +148,32 @@ Sherlock was designed to overcome the fatal flaw of standard LLM research: **hal
 
 ## 🔧 Installation & Setup
 
-Sherlock is an agent skill packaged in accordance with standard Agent Skill conventions:
+### Repository Structure
+```text
+sherlock/
+  ├── SKILL.md                          # Agent Skill Contract & Execution Protocol
+  ├── scripts/
+  │   ├── export_sherlock.py            # Publication-grade multi-format export engine
+  │   └── test_export_pipeline.py       # Automated verification test suite
+  ├── templates/
+  │   ├── research_plan_template.txt    # Binding research charter contract template
+  │   └── executive_summary_template.json # Executive BLUF, scorecard & datasets schema
+  ├── references/
+  │   ├── 3_tier_hierarchy.md           # Source authority hierarchy & triangulation rules
+  │   └── source_whitelists.md          # Curated domain registries & search launchpads
+  └── README.md                         # Practical user guide
+```
 
 ### Option 1: Global Agent Skill (Recommended)
 Place the skill files into your personal AI configuration directory:
-```
-~/.gemini/config/skills/sherlock/
-  ├── SKILL.md
-  └── scripts/
-      └── export_sherlock.py
+```bash
+git clone https://github.com/Prashant1873/Sherlock.git ~/.gemini/config/skills/sherlock
 ```
 
 ### Option 2: Workspace Project Skill
 Include Sherlock directly inside your project repository:
-```
-your-project/
-  ├── .agents/skills/sherlock/
-  │   ├── SKILL.md
-  │   └── scripts/export_sherlock.py
+```bash
+git clone https://github.com/Prashant1873/Sherlock.git .agents/skills/sherlock
 ```
 
 ### Environment Requirements

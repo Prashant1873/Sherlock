@@ -1,0 +1,62 @@
+{
+  "bluf": "Single high-impact sentence synthesizing the core empirical finding and strategic takeaway.",
+  "executive_summary": [
+    "Synthesized core finding 1 with citation [DP-1]...",
+    "Synthesized core finding 2 with citation [DP-2]..."
+  ],
+  "kpi_scorecard": [
+    {
+      "metric": "Key Metric / Dimension",
+      "value": "Empirical Value",
+      "benchmark": "Baseline / Benchmark",
+      "takeaway": "Actionable Strategic Takeaway [DP-1]"
+    }
+  ],
+  "so_what": [
+    "Actionable strategic/clinical implication 1 answering 'What does this mean for decisions?'...",
+    "Operational/commercial impact 2..."
+  ],
+  "comparative_matrices": [
+    {
+      "title": "Cross-Cohort Comparative Analysis",
+      "description": "Empirical comparison across target segments",
+      "headers": ["Dimension / Cohort", "Segment A", "Segment B", "Key Variance / Implication"],
+      "rows": [
+        ["Metric 1", "Value A", "Value B", "Implication [DP-1]"]
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "title": "Historical & Projected Market Revenue (2020-2026)",
+      "chart_type": "column",
+      "x_axis_title": "Year",
+      "y_axis_title": "Revenue ($B)",
+      "headers": ["Year", "Total Market ($B)", "Enterprise Segment ($B)"],
+      "rows": [
+        ["2020", 4.2, 2.5],
+        ["2021", 5.8, 3.4],
+        ["2022", 7.6, 4.6],
+        ["2023", 9.8, 6.1],
+        ["2024", 12.4, 7.9],
+        ["2025 (Est)", 15.2, 9.8],
+        ["2026 (Proj)", 18.5, 12.1]
+      ],
+      "data_point_refs": ["DP-1", "DP-3"]
+    }
+  ],
+  "evidence_quality_audit": {
+    "total_data_points": 42,
+    "triangulated_count": 38,
+    "triangulation_rate": "90.5%",
+    "tier_distribution": {
+      "tier_1_count": 26,
+      "tier_1_pct": "61.9%",
+      "tier_2_count": 12,
+      "tier_2_pct": "28.6%",
+      "tier_3_count": 4,
+      "tier_3_pct": "9.5%"
+    },
+    "conflicts_adjudicated": 2
+  }
+}

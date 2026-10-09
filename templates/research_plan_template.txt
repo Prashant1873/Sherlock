@@ -1,0 +1,31 @@
+================================================================================
+RESEARCH CHARTER & HYPOTHESIS CONTRACT: {Topic Title}
+================================================================================
+Date: {YYYY-MM-DD}
+Topic Slug: {topic_slug}
+Domain: {pharma|tech|finance|legal|admin|ai|general}
+
+1. EXECUTIVE CONTEXT & PRESENTATION STANDARD
+   - Target Audience: {From Phase 0 Socratic Intake}
+   - Core Decision at Stake: {Strategic or operational decision riding on data}
+   - Presentation Requirement: Publication-grade executive briefing (.docx, .xlsx, .pdf) [Datasets & Native Charts: Active if requested]
+
+2. RESEARCH SCOPE & BOUNDARIES
+   - In-Scope Dimensions: {Geographies, demographics, segments, timeframes}
+   - Explicit Exclusions: {Out-of-scope areas captured in Phase 0}
+
+3. EMPIRICAL HYPOTHESES TO TEST
+   - [HYP-1]: {Baseline hypothesis or metric to test against empirical data}
+   - [HYP-2]: {Secondary hypothesis or benchmark to validate}
+
+4. MECE SUB-QUESTIONS & REQUIRED METRICS
+   - Sub-question 1 & Target Metrics (aligned with domain framework)
+   - Sub-question 2 & Target Metrics (aligned with domain framework)
+   - Comparative Matrix Requirement: {true/false, dimensions to benchmark}
+
+5. EMPIRICAL INTEGRITY & TRIANGULATION STANDARDS
+   - Absolute Data Accuracy (#1 Target): Zero tolerance for approximations.
+   - Zero Parametric Memory: All claims derived from live retrieved pages.
+   - Triangulation Standard: 2+ independent sources with at least one Tier 1/2 authority.
+   - Conflict Adjudication: Log variances explicitly without smoothing or averaging.
+================================================================================
