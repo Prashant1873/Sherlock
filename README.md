@@ -25,10 +25,11 @@ Sherlock is an empirical, zero-hallucination secondary research system where **d
 3. **Zero Parametric Memory**:
    - All factual claims and metrics must originate directly from web pages retrieved during execution.
    - Speculation, unverified extrapolations, or uncorroborated assertions are strictly banned.
-4. **Triangulation Rule (2+ Independent Sources)**:
+4. **Triangulation Rule (2+ Independent Sources with Tier 1/2 Standard)**:
    - Every candidate data point must be verified by a primary source URL with a verbatim quote AND corroborated by an independent secondary search grep.
-   - Only triangulated data points receive "Highest" confidence and `triangulation_status: "Flag as Triangulated"`.
-   - Conflicting or uncorroborated points must be marked as `"Undeclared"`.
+   - To qualify for `"Highest"` confidence and `triangulation_status: "Flag as Triangulated"`, at least ONE of the corroborating sources MUST be a **Tier 1** (primary/regulatory/peer-reviewed) or **Tier 2** (institutional/audited) authority.
+   - Points corroborated solely by Tier 3 (trade media, industry news, commercial blogs) sources are capped at `"Medium"` confidence and marked `"Undeclared"`.
+   - Conflicting authoritative figures are never averaged; they require explicit structured conflict adjudication (`triangulation_status: "Conflict"`).
 5. **Resumable State**:
    - Completed chunks are saved as `{topic_slug}/results/chunk_{id:02d}_{slug}.json`.
    - Before executing any chunk, inspect the `results/` directory and execute only the first uncompleted chunk. Never re-run completed chunks.
@@ -200,6 +201,113 @@ When formulating sub-questions and chunk outlines in Phase 1, the agent MUST adh
 
 ---
 
+## Curated Domain Source Whitelist Registries
+
+Whitelist registries serve as **authoritative starting points and primary anchors—NOT restrictive boundaries**. Research MUST remain open for broad discovery across industry publications, company releases, analyst reports, and specialist web repositories, with all retrieved sources evaluated through the 3-Tier Source Authority Hierarchy:
+
+### 1. Pharma & Healthcare (`pharma`)
+- **Regulatory Authorities**: `fda.gov`, `ema.europa.eu`, `pmda.go.jp`, `mhra.gov.uk`
+- **Clinical Trial Registries**: `clinicaltrials.gov`, `who.int/trialsearch`, `isrctn.com`
+- **Peer-Reviewed Biomedical Journals**: `pubmed.ncbi.nlm.nih.gov`, `ncbi.nlm.nih.gov/pmc`, `thelancet.com`, `nejm.org`, `jamanetwork.com`, `nature.com`
+- **Public Health & Professional Societies**: `who.int`, `cdc.gov`, `nih.gov`, `esmo.org`, `asco.org`
+
+### 2. Technology & Enterprise IT (`tech`)
+- **Official Documentation**: `docs.*`, `learn.microsoft.com`, `cloud.google.com/docs`, `aws.amazon.com/documentation`, `kubernetes.io/docs`
+- **Technical Standards & Protocols**: `ietf.org/rfc`, `w3.org`, `iso.org`, `nist.gov`
+- **Academic & Systems Research**: `arxiv.org`, `ieeexplore.ieee.org`, `dl.acm.org`, `usenix.org`
+- **Open-Source Repositories**: `github.com` (official release tags, architecture RFCs), `apache.org`
+
+### 3. Finance, PE & M&A (`finance`)
+- **Statutory & Securities Filings**: `sec.gov/edgar` (10-K, 10-Q, 8-K filings), `fca.org.uk`, `esma.europa.eu`
+- **Central Banks & Economic Databases**: `fred.stlouisfed.org`, `federalreserve.gov`, `ecb.europa.eu`, `bis.org`
+- **Multilateral Financial Institutions**: `worldbank.org`, `imf.org`, `oecd.org`, `wto.org`
+- **Primary Exchange Disclosures**: `nyse.com`, `nasdaq.com`, `londonstockexchange.com`
+
+### 4. Legal, Regulatory & Public Policy (`legal`)
+- **Statutory & Regulatory Portals**: `congress.gov`, `govinfo.gov`, `federalregister.gov`, `eur-lex.europa.eu`, `legislation.gov.uk`
+- **Judicial & Jurisprudence Portals**: `supremecourt.gov`, `curia.europa.eu`, `uscourts.gov`
+- **Policy Research & Oversight**: `crsreports.congress.gov`, `gao.gov`
+
+### 5. Public Administration & Governance (`admin`)
+- **Government Spending & Audit Portals**: `usaspending.gov`, `gao.gov`, `oig.*.gov`, `fiscal.treasury.gov`
+- **Statistical Agencies**: `census.gov`, `bls.gov`, `bea.gov`, `ons.gov.uk`, `eurostat.ec.europa.eu`
+
+### 6. Artificial Intelligence & Machine Learning (`ai`)
+- **Benchmarks & Repositories**: `arxiv.org/abs/*`, `paperswithcode.com`, `huggingface.co/leaderboards`, `lmarena.ai`
+- **Primary Laboratory Disclosures**: `openai.com/research`, `anthropic.com/research`, `deepmind.google/research`, `ai.meta.com/research`
+- **AI Safety & Governance Bodies**: `airc.nist.gov`, `cset.georgetown.edu`, `oecd.ai`
+
+---
+
+## 3-Tier Source Authority Hierarchy & Triangulation Standard
+
+Every retrieved source and candidate data point is classified into one of three authority tiers based on institutional governance, audit rigour, and regulatory accountability:
+
+### Source Authority Tiers
+- **Tier 1 (Primary / Regulatory / Peer-Reviewed)**:
+  - Official government portals, legal codifications, and statutory registries (e.g., `fda.gov`, `sec.gov`, `congress.gov`, `usaspending.gov`).
+  - Regulatory filing systems and audited corporate disclosures (e.g., SEC EDGAR 10-K/10-Q filings, court dockets).
+  - Primary clinical trial and scientific registries (e.g., `clinicaltrials.gov`, WHO ICTRP).
+  - Peer-reviewed scientific, technical, and biomedical journals (e.g., *The Lancet*, *NEJM*, *JAMA*, *Nature*, *IEEE*, *ACM*).
+  - Central banks and national statistical bureaus (e.g., Federal Reserve, BLS, Census Bureau, ECB).
+- **Tier 2 (Institutional / Audited / Global Standards)**:
+  - Multilateral organizations and intergovernmental bodies (e.g., World Bank, IMF, OECD, WHO, WTO).
+  - Standards bodies and engineering consortia (e.g., ISO, NIST, IETF, W3C).
+  - Audited corporate financial statements and verified institutional research whitepapers.
+  - Recognized academic working paper repositories and conference proceedings (e.g., arXiv, NBER).
+- **Tier 3 (Secondary / Industry Media / Trade Press)**:
+  - Industry news portals, technology trade press, and specialized media (e.g., *TechCrunch*, *Endpoints News*, *Fierce Biotech*, *Bloomberg News*, *Reuters*).
+  - Commercial market research summaries and analyst blogs (e.g., Gartner summaries, IDC blogs, Statista).
+  - Corporate marketing collateral, press releases, product blogs, and general web commentary.
+
+### Triangulation Standard & Invariant Rules
+1. **Tier 1 / Tier 2 Requirement for Triangulation**:
+   - To qualify for `"triangulation_status": "Flag as Triangulated"` and `"confidence_score": "Highest"`, at least **ONE** of the corroborating sources MUST be a **Tier 1** or **Tier 2** authority.
+   - If a candidate finding is corroborated solely by Tier 3 sources (e.g., two trade news blogs echoing an unverified press release), it **CANNOT** receive Highest confidence. It MUST be assigned `"confidence_score": "Medium"` and `"triangulation_status": "Undeclared"`.
+2. **Open-Web Tiering Principle**:
+   - Curated whitelists are starting-point anchors, not boundaries. Any source discovered via broad open-web search that meets Tier 1 or Tier 2 criteria (e.g., an unlisted regional health agency, a statutory court docket, or an audited company 10-K) is fully categorized as Tier 1 or Tier 2.
+
+---
+
+## Authoritative Conflict Adjudication Protocol
+
+When two Tier 1 or Tier 2 authoritative sources report conflicting figures, metrics, dates, or findings:
+
+### Non-Negotiable Adjudication Rules:
+1. **Zero Smoothing / Zero Averaging**:
+   - NEVER average, interpolate, split the difference, or synthesize conflicting authoritative numbers into an artificial composite figure.
+   - NEVER arbitrarily pick one source and silently discard the other.
+2. **Explicit Variance Documentation**:
+   - Assign `"triangulation_status": "Conflict"`.
+   - Assign `"confidence_score": "Conflict - Adjudicated"`.
+   - Append a structured `conflict_adjudication` object documenting the dispute:
+     ```json
+     "conflict_adjudication": {
+       "metric_name": "<Name of disputed metric>",
+       "source_a": {
+         "url": "<URL of Source A>",
+         "source_tier": "Tier 1",
+         "reported_value": "<Exact value reported by Source A>",
+         "quote": "<Verbatim quote from Source A>",
+         "date": "<Reporting date / year>",
+         "methodology": "<Cohort definition, accounting standard, or sample size>"
+       },
+       "source_b": {
+         "url": "<URL of Source B>",
+         "source_tier": "Tier 1",
+         "reported_value": "<Exact value reported by Source B>",
+         "quote": "<Verbatim quote from Source B>",
+         "date": "<Reporting date / year>",
+         "methodology": "<Cohort definition, accounting standard, or sample size>"
+       },
+       "root_cause_of_variance": "<Concise empirical explanation of why figures diverge: e.g., GAAP vs Non-GAAP definitions, intention-to-treat vs per-protocol population, FY23 vs FY24 restatement, regional vs global perimeter>"
+     }
+     ```
+3. **Executive Presentation**:
+   - In executive summaries, narrative sections, and matrices, report both figures alongside their respective institutional contexts and root causes of divergence (e.g., "Source A reports $12.4B [GAAP], whereas Source B reports $14.1B [Non-GAAP due to backlog]").
+
+---
+
 ## Phase 2: Chunk Execution (`/sherlock-deep` or Post-Approval)
 
 Trigger: User approves previous gate or invokes `/sherlock-deep`.
@@ -210,20 +318,24 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
    - Read `{topic_slug}/outline.yaml` and inspect `{topic_slug}/results/chunk_*.json`.
    - Select the lowest-numbered uncompleted chunk.
    - If all chunks in `outline.yaml` are already completed, skip directly to Phase 3 Gate.
-2. **Multi-Hop Targeted Retrieval**:
-   - Formulate 3 to 5 targeted search queries using `search_web`.
-   - Prioritize primary authoritative sources (government reports, peer-reviewed journals, official registries, SEC/statutory filings).
+2. **Multi-Hop Targeted Retrieval (Progressive 3-Wave Discovery Protocol)**:
+   - Formulate 3 to 5 targeted search queries using `search_web` following progressive discovery:
+     - **Wave 1 (Curated Whitelist Starting Points)**: Launch initial 2-3 queries leveraging curated domain whitelists (`site:` operators) to anchor foundational baseline metrics in statutory, regulatory, and peer-reviewed databases.
+     - **Wave 2 (Broad Domain-Specific & Institutional Discovery)**: Expand broadly across open-web institutional, academic, government (`.gov`), educational (`.edu`), industry, and trade sources without site restrictions to capture comprehensive, up-to-date domain coverage. Whitelists are starting points—never walls.
+     - **Wave 3 (Open Web Triangulation & Cross-Verification)**: Conduct open-web searches across corporate disclosures, industry press, market reports, and specialized coverage to cross-verify metrics, explore divergent perspectives, and capture secondary grep snippets.
+   - Any source discovered on the open web is evaluated and classified according to its intrinsic provenance in the 3-Tier Source Authority Hierarchy.
 3. **Verbatim Content Scraping**:
    - Fetch full page text for the top 2 to 4 candidate URLs using `read_url_content`.
    - Isolate verbatim sentences containing key statistics, percentages, and factual findings.
-4. **Secondary Verification Loop (Triangulation)**:
+4. **Secondary Verification Loop (3-Tier Triangulation Standard)**:
    - For each candidate data point:
      - Formulate a secondary verification query.
      - Run `search_web` with the verification query to capture an independent grep snippet.
      - Verify consistency across both sources.
-     - Assign confidence:
-       - `"Highest"`: Primary verbatim quote + secondary independent grep match (`triangulation_status`: `"Flag as Triangulated"`).
-       - `"Medium"` / `"Low"`: Single source or conflicting snippets (`triangulation_status`: `"Undeclared"`).
+     - Assign confidence and triangulation status:
+       - `"Highest"`: Primary verbatim quote + secondary independent grep match, where at least ONE source is Tier 1 or Tier 2 (`triangulation_status`: `"Flag as Triangulated"`).
+       - `"Medium"` / `"Low"`: Corroborated solely by Tier 3 sources, or single uncorroborated source (`triangulation_status`: `"Undeclared"`).
+       - `"Conflict - Adjudicated"`: Two Tier 1 or Tier 2 sources report conflicting numbers without resolution (`triangulation_status`: `"Conflict"`), requiring a structured `conflict_adjudication` block.
 5. **Persist Chunk JSON**:
    - Write `{topic_slug}/results/chunk_{id:02d}_{slug}.json`:
      ```json
@@ -250,6 +362,7 @@ Trigger: User approves previous gate or invokes `/sherlock-deep`.
                "data_point": "Market reached $14.2B in 2024, expanding at 18.5% CAGR",
                "exact_url": "https://example.com/report-2024",
                "quoted_text": "The market reached $14.2B in 2024, expanding at an 18.5% CAGR.",
+               "source_tier": "Tier 1",
                "verification_query": "\"market reached $14.2B\" \"18.5% CAGR\"",
                "grep_result": "...market reached $14.2B in 2024 with an 18.5% CAGR...",
                "confidence_score": "Highest",
@@ -304,7 +417,21 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
              ["Metric 1", "Value A", "Value B", "Implication [DP-1]"]
            ]
          }
-       ]
+       ],
+       "evidence_quality_audit": {
+         "total_data_points": 42,
+         "triangulated_count": 38,
+         "triangulation_rate": "90.5%",
+         "tier_distribution": {
+           "tier_1_count": 26,
+           "tier_1_pct": "61.9%",
+           "tier_2_count": 12,
+           "tier_2_pct": "28.6%",
+           "tier_3_count": 4,
+           "tier_3_pct": "9.5%"
+         },
+         "conflicts_adjudicated": 2
+       }
      }
      ```
    - *Note*: If the research inquiry does not require comparative analysis, `comparative_matrices` may be an empty array `[]`.
@@ -316,14 +443,15 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
      `python "<path_to_export_sherlock.py>" -d "./{topic_slug}" -t "{Topic Title}"`
 4. **Verify Output Files**:
    - Ensure deliverables are created:
-     - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing 8-column data matrix with emerald highlights for triangulated points, plus styled Comparative Matrix sheets when applicable.
+     - `{topic_slug}_report.xlsx`: Multi-sheet styled workbook containing 8-column data matrix with emerald highlights for triangulated points, source authority tier tags, Evidence Quality Audit summary sheet, plus styled Comparative Matrix sheets when applicable.
      - `{topic_slug}_report.csv`: UTF-8 machine-readable audit dataset (and `{topic_slug}_report_comparative.csv` when applicable).
      - `{topic_slug}_report.docx`: Fluff-free executive dossier containing:
-       1. Executive Summary
+       1. Executive Summary & Evidence Quality Audit Scorecard
        2. Strategic Implications ("So What?")
        3. Comparative Matrices (when query requires)
        4. Detailed Section Findings
-       5. Verified Data Points Index (Corroborated Ground Truth Table)
+       5. Authoritative Conflict Adjudication Log (if applicable)
+       6. Verified Data Points Index (Corroborated Ground Truth Table with Source Tiers)
        *Clean formatting: zero asterisk artifacts and no artificial number bolding.*
 5. **Deliver in Chat**:
    - Present high-density findings directly in chat:
@@ -331,5 +459,5 @@ Trigger: User explicitly approves final report generation at Gate 2 or invokes `
      - Strategic Implications ("So What?")
      - Comparative Matrix (if query requires)
      - Key Triangulated Highlights
-     - Methodology & Triangulation Rate
+     - Evidence Quality Audit Scorecard (Tier 1/2/3 breakdown %, Triangulation Rate %, Conflicts Adjudicated)
    - Provide clickable file links (`file:///...`) to `.xlsx`, `.csv`, and `.docx`.
