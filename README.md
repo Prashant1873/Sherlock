@@ -224,6 +224,7 @@ Drop the matching template from `rules/` into your workspace root or global agen
 | **Anthropic Claude Code** | `rules/CLAUDE.md` | Workspace `CLAUDE.md` or `~/.claude/CLAUDE.md` |
 | **Cursor** | `rules/.cursorrules` | Workspace `.cursorrules` or `.cursor/rules/` |
 | **OpenAI Codex / OpenCode** | `rules/AGENTS.md` | Workspace `AGENTS.md` or `.agents/AGENTS.md` |
+| **Microsoft Copilot / Copilot Studio** | `rules/copilot-instructions.md` | `.github/copilot-instructions.md` or Skill Package |
 
 ### Trigger Semantics
 

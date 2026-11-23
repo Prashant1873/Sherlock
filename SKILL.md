@@ -1,30 +1,6 @@
 ---
 name: sherlock
-description: >-
-  Autonomous empirical deep research engine where data accuracy is the absolute #1 target.
-  Automatically activate when the user requests comprehensive secondary research, industry or clinical pipeline benchmarking, market sizing, financial/PE due diligence, enterprise IT TCO comparisons, 2+ source triangulation, verbatim quotation scraping, or publication-grade deliverables (.docx, .xlsx, .pdf).
-  Enforces strict 1-chunk-per-turn execution and mandatory interactive human approval gates.
-  DO NOT activate for casual questions, simple factual definitions, quick programming lookups, or shallow summaries.
-version: "4.0.0"
-license: "MIT"
-user-invocable: true
-allowed-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - search_web
-  - read_url_content
-  - run_command
-  - ask_question
-compatibility:
-  - antigravity
-  - claude-code
-  - cursor
-  - codex
-  - opencode
+description: "Autonomous empirical deep research engine where data accuracy is the absolute primary target. Automatically activate when the user requests comprehensive secondary research, industry or clinical pipeline benchmarking, market sizing, financial/PE due diligence, enterprise IT TCO comparisons, 2+ source triangulation, verbatim quotation scraping, or publication-grade deliverables (.docx, .xlsx, .pdf). Enforces strict 1-chunk-per-turn execution and mandatory interactive human approval gates. DO NOT activate for casual questions, simple factual definitions, quick programming lookups, or shallow summaries."
 ---
 
 # Sherlock: Empirical Deep Research Protocol
@@ -33,16 +9,16 @@ Sherlock is an empirical, zero-hallucination secondary research system where **d
 
 ## Multi-IDE Runtime & Tool Compatibility Matrix
 
-Sherlock operates across Google Antigravity, Anthropic Claude Code, Cursor, OpenAI Codex, and OpenCode. Downstream agents must map functional roles to their host environment tools:
+Sherlock operates across Google Antigravity, Anthropic Claude Code, Cursor, OpenAI Codex, OpenCode, and Microsoft Copilot / Copilot Studio. Downstream agents must map functional roles to their host environment tools:
 
-| Functional Role | Antigravity | Claude Code | Cursor | OpenAI Codex | OpenCode |
-|---|---|---|---|---|---|
-| **Interactive Approval Gate** | `ask_question` | `AskFollowupQuestion` | `ask_followup_question` / `vscode_askquestions` | Terminal user input / prompt | `ask_question` / terminal prompt |
-| **Web Search** | `search_web` | `WebSearch` | `web_search` | `search_web` / web search tool | `web_search` / search tool |
-| **Web Fetch & Scraping** | `read_url_content` | `WebFetch` | `fetch` / `read_url_content` | `read_url_content` / HTTP fetch | `read_url_content` / HTTP get |
-| **Shell & Exporter Runner** | `run_command` | `Bash` | `terminal` / `run_command` | `run_command` / bash | `run_command` / bash |
-| **File Reading** | `view_file` | `View` | `read_file` / `view_file` | `view_file` / `cat` | `view_file` / `read_file` |
-| **File Writing & Editing** | `write_to_file` / `replace_file_content` | `Edit` / `Write` | `write_to_file` / `edit_file` | `write_to_file` / file edit | `write_to_file` / `edit_file` |
+| Functional Role | Antigravity | Claude Code | Cursor | OpenAI Codex | OpenCode | Microsoft Copilot / Copilot Studio |
+|---|---|---|---|---|---|---|
+| **Interactive Approval Gate** | `ask_question` | `AskFollowupQuestion` | `ask_followup_question` / `vscode_askquestions` | Terminal user input / prompt | `ask_question` / terminal prompt | Conversational chat turn / user prompt |
+| **Web Search** | `search_web` | `WebSearch` | `web_search` | `search_web` / web search tool | `web_search` / search tool | Bing Web Search action / plugin |
+| **Web Fetch & Scraping** | `read_url_content` | `WebFetch` | `fetch` / `read_url_content` | `read_url_content` / HTTP fetch | `read_url_content` / HTTP get | Web browsing / HTTP connector |
+| **Shell & Exporter Runner** | `run_command` | `Bash` | `terminal` / `run_command` | `run_command` / bash | `run_command` / bash | Code Interpreter / Azure Automation / runner action |
+| **File Reading** | `view_file` | `View` | `read_file` / `view_file` | `view_file` / `cat` | `view_file` / `read_file` | Knowledge / document attachment reader |
+| **File Writing & Editing** | `write_to_file` / `replace_file_content` | `Edit` / `Write` | `write_to_file` / `edit_file` | `write_to_file` / file edit | `write_to_file` / `edit_file` | File storage connector / local writer |
 
 *Invariant rule:* Pause at every gate (Gate 0 Intake, Gate 1 Charter Approval, Gate 2 Chunk Transitions & Report Generation, Gate 3 Handoff) using the interactive prompt tool available in that runtime.
 
