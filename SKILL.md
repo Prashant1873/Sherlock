@@ -1,8 +1,12 @@
 ---
 name: sherlock
-description: "Autonomous empirical deep research engine where data accuracy is the absolute #1 target. Automatically activate when the user requests comprehensive secondary research, industry or clinical pipeline benchmarking, market sizing, financial/PE due diligence, enterprise IT TCO comparisons, 2+ source triangulation, verbatim quotation scraping, or publication-grade deliverables (.docx, .xlsx, .pdf). Enforces strict 1-chunk-per-turn execution and mandatory interactive human approval gates. DO NOT activate for casual questions, simple factual definitions, quick programming lookups, or shallow summaries."
-version: 4.0.0
-license: MIT
+description: >-
+  Autonomous empirical deep research engine where data accuracy is the absolute #1 target.
+  Automatically activate when the user requests comprehensive secondary research, industry or clinical pipeline benchmarking, market sizing, financial/PE due diligence, enterprise IT TCO comparisons, 2+ source triangulation, verbatim quotation scraping, or publication-grade deliverables (.docx, .xlsx, .pdf).
+  Enforces strict 1-chunk-per-turn execution and mandatory interactive human approval gates.
+  DO NOT activate for casual questions, simple factual definitions, quick programming lookups, or shallow summaries.
+version: "4.0.0"
+license: "MIT"
 user-invocable: true
 allowed-tools:
   - view_file
