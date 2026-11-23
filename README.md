@@ -232,29 +232,6 @@ Drop the matching template from `rules/` into your workspace root or global agen
 
 ---
 
-## 🧪 Verification & Test Suite
-
-Sherlock includes an automated end-to-end test suite verifying link integrity, workflow gate protocols, privacy sanitization, auto-activation rules, and export execution:
-
-```bash
-# 1. Link & cross-reference integrity (9 files)
-python scripts/test_link_integrity.py
-
-# 2. Workflow schema & approval gate audit
-python scripts/test_workflow_audit.py
-
-# 3. Privacy, local-path & secret sanitization
-python scripts/test_privacy_audit.py
-
-# 4. Auto-activation semantic triggers & rules audit
-python scripts/test_auto_activation.py
-
-# 5. Multi-format export pipeline regression
-python scripts/test_export_pipeline.py
-```
-
----
-
 ## 📁 Repository Structure
 
 ```text
@@ -262,21 +239,13 @@ sherlock/
   ├── LICENSE                               # Permissive MIT License
   ├── README.md                             # Comprehensive documentation & setup guide
   ├── SKILL.md                              # Root Universal Agent Skill Specification
-  ├── skills/
-  │   └── sherlock/
-  │       └── SKILL.md                      # Packaged skill file for multi-IDE discovery
   ├── rules/
   │   ├── CLAUDE.md                         # Anthropic Claude Code auto-activation rules
   │   ├── GEMINI.md                         # Google Antigravity auto-activation rules
   │   ├── .cursorrules                      # Cursor auto-activation rules
   │   └── AGENTS.md                         # OpenAI Codex & OpenCode auto-activation rules
   ├── scripts/
-  │   ├── export_sherlock.py                # Publication-grade multi-format export engine
-  │   ├── test_export_pipeline.py           # Exporter regression test suite
-  │   ├── test_link_integrity.py            # Link & path cross-reference validator
-  │   ├── test_workflow_audit.py            # Protocol schema & gate validator
-  │   ├── test_privacy_audit.py             # Privacy & secret sanitization validator
-  │   └── test_auto_activation.py           # Semantic trigger & rule validator
+  │   └── export_sherlock.py                # Publication-grade multi-format export engine
   ├── templates/
   │   ├── research_plan_template.txt        # Binding research charter contract template
   │   └── executive_summary_template.json   # Executive BLUF, scorecard & datasets schema
